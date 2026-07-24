@@ -1,143 +1,129 @@
 import Link from "next/link";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
-
-export default async function AdminTemplesPage() {
-  const temples = await prisma.temple.findMany({
-    include: {
-      poojas: true,
-      galleries: true,
-      facilities: true,
+export default function AdminDashboard() {
+  const managementCards = [
+    {
+      title: "Manage Temples",
+      description:
+        "Add, edit and manage temples available on DivyaArpan.",
+      icon: "🛕",
+      href: "/admin/temples",
+      available: true,
     },
-    orderBy: {
-      name: "asc",
+    {
+      title: "Manage Poojas",
+      description:
+        "Manage temple poojas, pricing and availability.",
+      icon: "🙏",
+      href: "/admin/poojas",
+      available: true,
     },
-  });
+    {
+      title: "Bookings",
+      description:
+        "View and manage devotee pooja bookings.",
+      icon: "📋",
+      href: "/admin/bookings",
+      available: true,
+    },
+    {
+      title: "Temple Gallery",
+      description:
+        "Manage temple photos and gallery images.",
+      icon: "🖼️",
+      href: "/admin/gallery",
+      available: false,
+    },
+    {
+      title: "Facilities",
+      description:
+        "Manage temple facilities and visitor information.",
+      icon: "🏛️",
+      href: "/admin/facilities",
+      available: false,
+    },
+    {
+      title: "Devotees",
+      description:
+        "View and manage registered devotees.",
+      icon: "👥",
+      href: "/admin/devotees",
+      available: false,
+    },
+  ];
 
   return (
     <main className="min-h-screen bg-orange-50">
       {/* Header */}
       <section className="bg-orange-700 text-white">
         <div className="max-w-6xl mx-auto px-6 py-10">
-          <Link
-            href="/admin"
-            className="text-orange-100 hover:text-white"
-          >
-            ← Back to Dashboard
-          </Link>
+          <p className="text-orange-100 font-medium">
+            DivyaArpan
+          </p>
 
-          <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-4xl font-bold">
-                Manage Temples
-              </h1>
+          <h1 className="text-4xl font-bold mt-2">
+            Admin Dashboard
+          </h1>
 
-              <p className="mt-2 text-orange-100">
-                Add, edit and manage temples on DivyaArpan.
-              </p>
-            </div>
-
-            <Link
-              href="/admin/temples/new"
-              className="bg-white text-orange-700 font-semibold px-6 py-3 rounded-xl hover:bg-orange-50 transition"
-            >
-              + Add New Temple
-            </Link>
-          </div>
+          <p className="mt-3 text-orange-100">
+            Manage temples, poojas, bookings and devotional services.
+          </p>
         </div>
       </section>
 
-      {/* Temple List */}
+      {/* Management Section */}
       <section className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Temples
-          </h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-8">
+          Management
+        </h2>
 
-          <span className="text-gray-600">
-            Total: {temples.length}
-          </span>
-        </div>
-
-        {temples.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-10 text-center">
-            <p className="text-xl font-semibold">
-              No temples found
-            </p>
-
-            <p className="text-gray-500 mt-2">
-              Add your first temple to DivyaArpan.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {temples.map((temple) => (
-              <div
-                key={temple.id}
-                className="bg-white rounded-2xl shadow-md overflow-hidden"
-              >
-                <div className="md:flex">
-                  <img
-                    src={temple.featuredImage}
-                    alt={temple.name}
-                    className="w-full md:w-64 h-52 object-cover"
-                  />
-
-                  <div className="p-6 flex-1">
-                    <div className="flex flex-col lg:flex-row lg:justify-between gap-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-orange-700">
-                          {temple.name}
-                        </h3>
-
-                        <p className="text-gray-600 mt-2">
-                          📍 {temple.city}, {temple.state}
-                        </p>
-
-                        <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-600">
-                          <span>
-                            🙏 {temple.poojas.length} Poojas
-                          </span>
-
-                          <span>
-                            🖼️ {temple.galleries.length} Images
-                          </span>
-
-                          <span>
-                            🏛️ {temple.facilities.length} Facilities
-                          </span>
-                        </div>
-
-                        {temple.isFeatured && (
-                          <span className="inline-block mt-4 bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-semibold">
-                            Featured Temple
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap lg:flex-col gap-3">
-                        <Link
-                          href={`/temples/${temple.slug}`}
-                          className="border border-orange-600 text-orange-700 px-5 py-2 rounded-lg text-center hover:bg-orange-50"
-                        >
-                          View
-                        </Link>
-
-                        <Link
-                          href={`/admin/temples/${temple.slug}/edit`}
-                          className="bg-orange-600 text-white px-5 py-2 rounded-lg hover:bg-orange-700 text-center"
-                        >
-                          Edit
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {managementCards.map((card) => {
+            const cardContent = (
+              <div className="bg-white rounded-2xl shadow-md p-8 h-full hover:shadow-xl transition">
+                <div className="text-4xl mb-5">
+                  {card.icon}
                 </div>
+
+                <h3 className="text-xl font-bold text-orange-700">
+                  {card.title}
+                </h3>
+
+                <p className="text-gray-600 mt-3 leading-relaxed">
+                  {card.description}
+                </p>
+
+                {card.available ? (
+                  <p className="mt-6 text-orange-600 font-semibold">
+                    Open →
+                  </p>
+                ) : (
+                  <p className="mt-6 text-gray-400 text-sm">
+                    Coming next
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            );
+
+            if (card.available) {
+              return (
+                <Link
+                  key={card.title}
+                  href={card.href}
+                  className="block"
+                >
+                  {cardContent}
+                </Link>
+              );
+            }
+
+            return (
+              <div key={card.title}>
+                {cardContent}
+              </div>
+            );
+          })}
+        </div>
       </section>
     </main>
   );
