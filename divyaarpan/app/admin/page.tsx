@@ -32,7 +32,7 @@ export default function AdminDashboard() {
         "Manage temple photos and gallery images.",
       icon: "🖼️",
       href: "/admin/gallery",
-      available: false,
+      available: true,
     },
     {
       title: "Facilities",
