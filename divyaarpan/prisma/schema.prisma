@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Temple {
+  id             Int        @id @default(autoincrement())
+  slug           String     @unique
+  name           String
+  city           String
+  state          String
+  address        String
+  description    String
+  openingTime    String
+  closingTime    String
+  mapUrl         String
+  featuredImage  String
+  isFeatured     Boolean    @default(false)
+
+  poojas         Pooja[]
+  galleries      Gallery[]
+  facilities     Facility[]
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model Pooja {
+  id          Int       @id @default(autoincrement())
+  templeId    Int
+
+  name        String
+  description String
+  duration    String
+  price       String
+  image       String
+  isActive    Boolean   @default(true)
+
+  temple      Temple    @relation(fields: [templeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Gallery {
+  id         Int      @id @default(autoincrement())
+  templeId   Int
+  imageUrl   String
+
+  temple     Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+}
+
+model Facility {
+  id         Int      @id @default(autoincrement())
+  templeId   Int
+  facility   String
+
+  temple     Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id         Int      @id @default(autoincrement())
+  bookingId  String   @unique
+
+  temple     String
+  pooja      String
+
+  price      String
+  duration   String
+
+  name       String
+  mobile     String
+  email      String
+
+  date       String
+  time       String
+
+  devotees   Int
+
+  sankalp    String?
+
+  status     String   @default("Payment Pending")
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
