@@ -40,7 +40,7 @@ export default function AdminDashboard() {
         "Manage temple facilities and visitor information.",
       icon: "🏛️",
       href: "/admin/facilities",
-      available: false,
+      available: true,
     },
     {
       title: "Devotees",
