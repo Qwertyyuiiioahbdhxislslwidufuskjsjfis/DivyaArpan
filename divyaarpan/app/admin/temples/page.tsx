@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { PrismaClient } from "@prisma/client";
+import DeleteTempleButton from "./DeleteTempleButton";
 
-const prisma = new PrismaClient();
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+const prisma =
+  globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
 
 export default async function AdminTemplesPage() {
   const temples = await prisma.temple.findMany({
@@ -19,7 +29,7 @@ export default async function AdminTemplesPage() {
     <main className="min-h-screen bg-orange-50">
       {/* Header */}
       <section className="bg-orange-700 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-10">
+        <div className="mx-auto max-w-6xl px-6 py-10">
           <Link
             href="/admin"
             className="text-orange-100 hover:text-white"
@@ -27,7 +37,7 @@ export default async function AdminTemplesPage() {
             ← Back to Dashboard
           </Link>
 
-          <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-4xl font-bold">
                 Manage Temples
@@ -40,7 +50,7 @@ export default async function AdminTemplesPage() {
 
             <Link
               href="/admin/temples/new"
-              className="bg-white text-orange-700 font-semibold px-6 py-3 rounded-xl hover:bg-orange-50 transition"
+              className="rounded-xl bg-white px-6 py-3 font-semibold text-orange-700 transition hover:bg-orange-50"
             >
               + Add New Temple
             </Link>
@@ -49,8 +59,8 @@ export default async function AdminTemplesPage() {
       </section>
 
       {/* Temple List */}
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex justify-between items-center mb-8">
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mb-8 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-800">
             Temples
           </h2>
@@ -61,12 +71,12 @@ export default async function AdminTemplesPage() {
         </div>
 
         {temples.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-10 text-center">
+          <div className="rounded-2xl bg-white p-10 text-center shadow">
             <p className="text-xl font-semibold">
               No temples found
             </p>
 
-            <p className="text-gray-500 mt-2">
+            <p className="mt-2 text-gray-500">
               Add your first temple to DivyaArpan.
             </p>
           </div>
@@ -75,27 +85,28 @@ export default async function AdminTemplesPage() {
             {temples.map((temple) => (
               <div
                 key={temple.id}
-                className="bg-white rounded-2xl shadow-md overflow-hidden"
+                className="overflow-hidden rounded-2xl bg-white shadow-md"
               >
                 <div className="md:flex">
                   <img
                     src={temple.featuredImage}
                     alt={temple.name}
-                    className="w-full md:w-64 h-52 object-cover"
+                    className="h-52 w-full object-cover md:w-64"
                   />
 
-                  <div className="p-6 flex-1">
-                    <div className="flex flex-col lg:flex-row lg:justify-between gap-6">
+                  <div className="flex-1 p-6">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
+                      {/* Temple Information */}
                       <div>
                         <h3 className="text-2xl font-bold text-orange-700">
                           {temple.name}
                         </h3>
 
-                        <p className="text-gray-600 mt-2">
+                        <p className="mt-2 text-gray-600">
                           📍 {temple.city}, {temple.state}
                         </p>
 
-                        <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-600">
+                        <div className="mt-5 flex flex-wrap gap-4 text-sm text-gray-600">
                           <span>
                             🙏 {temple.poojas.length} Poojas
                           </span>
@@ -110,26 +121,35 @@ export default async function AdminTemplesPage() {
                         </div>
 
                         {temple.isFeatured && (
-                          <span className="inline-block mt-4 bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-semibold">
+                          <span className="mt-4 inline-block rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-700">
                             Featured Temple
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap lg:flex-col gap-3">
+                      {/* Admin Actions */}
+                      <div className="flex flex-wrap gap-3 lg:w-36 lg:flex-col">
+                        {/* View */}
                         <Link
                           href={`/temples/${temple.slug}`}
-                          className="border border-orange-600 text-orange-700 px-5 py-2 rounded-lg text-center hover:bg-orange-50"
+                          className="rounded-lg border border-orange-600 px-5 py-2 text-center font-medium text-orange-700 transition hover:bg-orange-50"
                         >
                           View
                         </Link>
 
-                        <button
-                          type="button"
-                          className="bg-orange-600 text-white px-5 py-2 rounded-lg hover:bg-orange-700"
+                        {/* Edit */}
+                        <Link
+                          href={`/admin/temples/${temple.slug}/edit`}
+                          className="rounded-lg bg-orange-600 px-5 py-2 text-center font-medium text-white transition hover:bg-orange-700"
                         >
                           Edit
-                        </button>
+                        </Link>
+
+                        {/* Delete */}
+                        <DeleteTempleButton
+                          slug={temple.slug}
+                          templeName={temple.name}
+                        />
                       </div>
                     </div>
                   </div>

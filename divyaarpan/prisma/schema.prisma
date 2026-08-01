@@ -8,86 +8,636 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+/**
+ * |--------------------------------------------------------------------------
+ * | ENUMS
+ * |--------------------------------------------------------------------------
+ */
+
+enum PanditVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum PanditBookingType {
+  IMMEDIATE
+  SCHEDULED
+}
+
+enum PanditUrgency {
+  ASAP
+  WITHIN_1_HOUR
+  WITHIN_2_HOURS
+  WITHIN_4_HOURS
+  SCHEDULED
+}
+
+enum PanditBookingStatus {
+  REQUESTED
+  SEARCHING
+  PANDIT_ASSIGNED
+  AWAITING_PAYMENT
+  CONFIRMED
+  PANDIT_ON_THE_WAY
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_PANDIT_AVAILABLE
+}
+
+enum PanditPaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PanditOfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | TEMPLE
+ * |--------------------------------------------------------------------------
+ */
+
 model Temple {
-  id             Int        @id @default(autoincrement())
-  slug           String     @unique
-  name           String
-  city           String
-  state          String
-  address        String
-  description    String
-  openingTime    String
-  closingTime    String
-  mapUrl         String
-  featuredImage  String
-  isFeatured     Boolean    @default(false)
+  id            Int     @id @default(autoincrement())
+  slug          String  @unique
+  name          String
+  city          String
+  state         String
+  address       String
+  description   String
+  openingTime   String
+  closingTime   String
+  mapUrl        String
+  featuredImage String
+  isFeatured    Boolean @default(false)
 
-  poojas         Pooja[]
-  galleries      Gallery[]
-  facilities     Facility[]
+  poojas     Pooja[]
+  galleries  Gallery[]
+  facilities Facility[]
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([state])
+  @@index([isFeatured])
 }
 
 model Pooja {
-  id          Int       @id @default(autoincrement())
-  templeId    Int
+  id       Int @id @default(autoincrement())
+  templeId Int
 
   name        String
   description String
   duration    String
   price       String
   image       String
-  isActive    Boolean   @default(true)
+  isActive    Boolean @default(true)
 
-  temple      Temple    @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  temple Temple @relation(fields: [templeId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([templeId])
+  @@index([name])
+  @@index([isActive])
 }
 
 model Gallery {
-  id         Int      @id @default(autoincrement())
-  templeId   Int
-  imageUrl   String
+  id       Int    @id @default(autoincrement())
+  templeId Int
+  imageUrl String
 
-  temple     Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  temple Temple @relation(fields: [templeId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([templeId])
 }
 
 model Facility {
-  id         Int      @id @default(autoincrement())
-  templeId   Int
-  facility   String
+  id       Int    @id @default(autoincrement())
+  templeId Int
+  facility String
 
-  temple     Temple   @relation(fields: [templeId], references: [id], onDelete: Cascade)
+  temple Temple @relation(fields: [templeId], references: [id], onDelete: Cascade)
+
+  @@index([templeId])
 }
 
+/**
+ * |--------------------------------------------------------------------------
+ * | EXISTING TEMPLE BOOKING
+ * |--------------------------------------------------------------------------
+ */
+
 model Booking {
-  id         Int      @id @default(autoincrement())
-  bookingId  String   @unique
+  id        Int    @id @default(autoincrement())
+  bookingId String @unique
 
-  temple     String
-  pooja      String
+  temple String
+  pooja  String
 
-  price      String
-  duration   String
+  price    String
+  duration String
 
-  name       String
-  mobile     String
-  email      String
+  name   String
+  mobile String
+  email  String
 
-  date       String
-  time       String
+  date String
+  time String
 
-  devotees   Int
+  devotees Int
 
-  sankalp    String?
+  sankalp String?
 
-  status     String   @default("Payment Pending")
+  status String @default("Payment Pending")
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mobile])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | DEVOTEE
+ * |--------------------------------------------------------------------------
+ */
+
+model Devotee {
+  id Int @id @default(autoincrement())
+
+  name   String
+  mobile String  @unique
+  email  String? @unique
+
+  city    String?
+  state   String?
+  country String  @default("India")
+
+  isActive Boolean @default(true)
+
+  panditBookings PanditBooking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([isActive])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | PANDIT
+ * |--------------------------------------------------------------------------
+ */
+
+model Pandit {
+  id Int @id @default(autoincrement())
+
+  panditCode String @unique
+
+  name   String
+  mobile String  @unique
+  email  String? @unique
+
+  profileImage String?
+
+  gender String?
+
+  dateOfBirth DateTime?
+
+  experienceYears Int @default(0)
+
+  bio String?
+
+  city    String
+  state   String
+  country String @default("India")
+
+  address String?
+
+  pincode String?
+
+  latitude  Float?
+  longitude Float?
+
+  verificationStatus PanditVerificationStatus @default(PENDING)
+
+  /**
+   * Controls whether the Pandit is active on DivyaArpan.
+   * Deactivation does NOT delete the Pandit and does NOT
+   * automatically remove their VERIFIED status.
+   */
+  isActive Boolean @default(true)
+
+  /**
+   * Admin deactivation audit information.
+   * Reason should contain the selected primary reason.
+   * Remarks can contain additional Admin notes.
+   */
+  deactivationReason  String?
+  deactivationRemarks String?
+
+  /**
+   * Timestamp of the most recent deactivation.
+   */
+  deactivatedAt DateTime?
+
+  /**
+   * Timestamp of the most recent reactivation.
+   */
+  reactivatedAt DateTime?
+
+  /**
+   * Online means the Pandit is currently accepting
+   * marketplace requests.
+   * When Admin deactivates a Pandit, our API will
+   * automatically set this to false.
+   */
+  isOnline Boolean @default(false)
+
+  /**
+   * Pandit may separately choose whether they
+   * accept immediate or scheduled bookings.
+   */
+  acceptsImmediate Boolean @default(true)
+  acceptsScheduled Boolean @default(true)
+
+  rating       Float @default(0)
+  totalRatings Int   @default(0)
+
+  totalBookings Int @default(0)
+
+  languages    PanditLanguage[]
+  services     PanditService[]
+  serviceAreas PanditServiceArea[]
+  availability PanditAvailability[]
+
+  bookingOffers PanditBookingOffer[]
+
+  assignedBookings PanditBooking[] @relation("AssignedPandit")
+
+  documents PanditDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([state])
+  @@index([isOnline])
+  @@index([isActive])
+  @@index([verificationStatus])
+  @@index([city, isOnline, isActive, verificationStatus])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | PANDIT LANGUAGES
+ * |--------------------------------------------------------------------------
+ */
+
+model PanditLanguage {
+  id Int @id @default(autoincrement())
+
+  panditId Int
+
+  language String
+
+  pandit Pandit @relation(fields: [panditId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([panditId, language])
+  @@index([language])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | PANDIT SERVICES / POOJAS
+ * |--------------------------------------------------------------------------
+ */
+
+model PanditService {
+  id Int @id @default(autoincrement())
+
+  panditId Int
+
+  serviceName String
+
+  /**
+   * Amount in paise.
+   * Example:
+   * ₹1,500 = 150000
+   * This is better than storing money as String.
+   */
+  basePrice Int?
+
+  durationMinutes Int?
+
+  isActive Boolean @default(true)
+
+  pandit Pandit @relation(fields: [panditId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([panditId, serviceName])
+  @@index([serviceName])
+  @@index([isActive])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | PANDIT SERVICE AREAS
+ * |--------------------------------------------------------------------------
+ */
+
+model PanditServiceArea {
+  id Int @id @default(autoincrement())
+
+  panditId Int
+
+  city String
+
+  area String
+
+  pincode String?
+
+  /**
+   * Useful later for location-based matching.
+   */
+  latitude  Float?
+  longitude Float?
+
+  serviceRadiusKm Float?
+
+  pandit Pandit @relation(fields: [panditId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([city])
+  @@index([area])
+  @@index([pincode])
+  @@index([panditId, city])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | PANDIT AVAILABILITY
+ * |--------------------------------------------------------------------------
+ */
+
+model PanditAvailability {
+  id Int @id @default(autoincrement())
+
+  panditId Int
+
+  /**
+   * 0 = Sunday
+   * 1 = Monday
+   * ...
+   * 6 = Saturday
+   */
+  dayOfWeek Int
+
+  startTime String
+  endTime   String
+
+  isAvailable Boolean @default(true)
+
+  pandit Pandit @relation(fields: [panditId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([panditId])
+  @@index([dayOfWeek])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | PANDIT DOCUMENTS / VERIFICATION
+ * |--------------------------------------------------------------------------
+ */
+
+model PanditDocument {
+  id Int @id @default(autoincrement())
+
+  panditId Int
+
+  documentType String
+
+  documentUrl String
+
+  documentNumber String?
+
+  isVerified Boolean @default(false)
+
+  pandit Pandit @relation(fields: [panditId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([panditId])
+  @@index([isVerified])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | BOOK MY PANDIT BOOKING
+ * |--------------------------------------------------------------------------
+ */
+
+model PanditBooking {
+  id Int @id @default(autoincrement())
+
+  bookingId String @unique
+
+  /**
+   * Devotee relation is optional initially so our
+   * existing booking flow continues to work even
+   * before customer login is introduced.
+   */
+  devoteeId Int?
+
+  devotee Devotee? @relation(fields: [devoteeId], references: [id], onDelete: SetNull)
+
+  /**
+   * Pooja / service requested.
+   */
+  service String
+
+  /**
+   * Immediate or scheduled.
+   */
+  bookingType PanditBookingType @default(SCHEDULED)
+
+  urgency PanditUrgency @default(SCHEDULED)
+
+  /**
+   * Pooja location.
+   */
+  city    String
+  address String
+
+  state   String?
+  pincode String?
+
+  latitude  Float?
+  longitude Float?
+
+  /**
+   * Pandit language preference.
+   */
+  language String
+
+  /**
+   * Existing fields retained so current pages
+   * do not break.
+   * We can migrate these to DateTime later.
+   */
+  date String
+  time String
+
+  sankalp String?
+
+  /**
+   * Devotee snapshot.
+   * We keep these even when devoteeId exists because
+   * booking records should preserve the information
+   * used at the time of booking.
+   */
+  devoteeName String
+  mobile      String
+  email       String?
+
+  status PanditBookingStatus @default(REQUESTED)
+
+  paymentStatus PanditPaymentStatus @default(PENDING)
+
+  /**
+   * Pandit Assignment
+   */
+  panditId Int?
+
+  assignedPandit Pandit? @relation("AssignedPandit", fields: [panditId], references: [id], onDelete: SetNull)
+
+  /**
+   * Keep panditName as a historical snapshot.
+   */
+  panditName String?
+
+  /**
+   * Amount stored in paise.
+   * Example:
+   * ₹2,000 = 200000
+   */
+  amount Int?
+
+  /**
+   * Payment gateway details.
+   */
+  paymentId      String?
+  paymentOrderId String?
+
+  /**
+   * Matching timestamps.
+   */
+  searchStartedAt DateTime?
+
+  assignedAt DateTime?
+
+  confirmedAt DateTime?
+
+  completedAt DateTime?
+
+  cancelledAt DateTime?
+
+  offers PanditBookingOffer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([devoteeId])
+  @@index([panditId])
+  @@index([city])
+  @@index([service])
+  @@index([language])
+  @@index([bookingType])
+  @@index([urgency])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([city, service, language, status])
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | PANDIT BOOKING OFFERS
+ * |--------------------------------------------------------------------------
+ * |
+ * | One booking can be offered to multiple suitable Pandits.
+ * |
+ * | Example:
+ * |
+ * | Booking DA1001
+ * |
+ * | Pandit A -> ACCEPTED
+ * | Pandit B -> EXPIRED
+ * | Pandit C -> DECLINED
+ * |
+ * |--------------------------------------------------------------------------
+ */
+
+model PanditBookingOffer {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+  panditId  Int
+
+  booking PanditBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  pandit Pandit @relation(fields: [panditId], references: [id], onDelete: Cascade)
+
+  status PanditOfferStatus @default(PENDING)
+
+  /**
+   * Useful for marketplace dispatch rounds.
+   * Round 1 -> best 5 Pandits
+   * Round 2 -> next 10 Pandits
+   * etc.
+   */
+  dispatchRound Int @default(1)
+
+  offeredAt DateTime @default(now())
+
+  expiresAt DateTime?
+
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookingId, panditId])
+  @@index([bookingId])
+  @@index([panditId])
+  @@index([status])
+  @@index([panditId, status])
 }

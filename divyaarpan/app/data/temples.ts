@@ -4,14 +4,13 @@ export const temples = [
     name: "Shree Siddhivinayak Temple",
     city: "📍 Prabhadevi, Mumbai, Maharashtra",
 
-    image:
-      "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=1200",
+    image: "/images/temples/siddhivinayak.jpg",
 
-    images: [
-      "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=1200",
-      "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=1200",
-      "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=1200",
-    ],
+images: [
+  "/images/temples/siddhivinayak.jpg",
+  "/images/temples/siddhivinayak.jpg",
+  "/images/temples/siddhivinayak.jpg",
+],
 
     map:
       "https://www.google.com/maps?q=Siddhivinayak+Temple+Mumbai&output=embed",
@@ -53,14 +52,13 @@ export const temples = [
     name: "Kashi Vishwanath",
     city: "📍 Varanasi, Uttar Pradesh",
 
-    image:
-      "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200",
+    image: "/images/temples/kashi-vishwanath.jpg",
 
-    images: [
-      "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200",
-      "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200",
-      "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200",
-    ],
+images: [
+  "/images/temples/kashi-vishwanath.jpg",
+  "/images/temples/kashi-vishwanath.jpg",
+  "/images/temples/kashi-vishwanath.jpg",
+],
 
     map:
       "https://www.google.com/maps?q=Kashi+Vishwanath+Temple+Varanasi&output=embed",
@@ -104,14 +102,13 @@ export const temples = [
 
     city: "📍 Tirupati, Andhra Pradesh",
 
-    image:
-      "https://picsum.photos/1200/700?random=1",
+    image: "/images/temples/tirupati-balaji.jpg",
 
-    images: [
-      "https://picsum.photos/600/400?random=11",
-      "https://picsum.photos/600/400?random=12",
-      "https://picsum.photos/600/400?random=13",
-    ],
+images: [
+  "/images/temples/tirupati-balaji.jpg",
+  "/images/temples/tirupati-balaji.jpg",
+  "/images/temples/tirupati-balaji.jpg",
+],
 
 
     map:
