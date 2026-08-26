@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -58,7 +58,7 @@ export default function ManagePanditBookingPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function fetchBooking() {
+  const fetchBooking = useCallback(async () => {
     if (!bookingId) return;
 
     setLoading(true);
@@ -105,11 +105,11 @@ export default function ManagePanditBookingPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [bookingId]);
 
   useEffect(() => {
-    fetchBooking();
-  }, [bookingId]);
+    void Promise.resolve().then(fetchBooking);
+  }, [bookingId, fetchBooking]);
 
   async function handleSave() {
     if (!booking) return;
@@ -447,7 +447,7 @@ export default function ManagePanditBookingPage() {
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                We'll replace this with a verified Pandit
+                We&apos;ll replace this with a verified Pandit
                 selection list later.
               </p>
             </div>

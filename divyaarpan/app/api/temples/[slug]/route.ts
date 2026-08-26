@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { requireRole } from "../../../lib/auth";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -72,6 +73,9 @@ export async function PUT(
   const { slug } = await params;
 
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
+    }
     const body = await request.json();
 
     const {
@@ -200,6 +204,9 @@ export async function DELETE(
   const { slug } = await params;
 
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
+    }
     // Check whether temple exists
     const existingTemple = await prisma.temple.findUnique({
       where: {

@@ -1,0 +1,269 @@
+"use client";
+
+import Link from "next/link";
+import {
+  ArrowRight,
+  Flower2,
+  ShoppingBag,
+  Sparkles,
+  UserRound,
+  ShieldCheck,
+  BadgeCheck,
+  Clock3,
+  UsersRound,
+} from "lucide-react";
+
+const services = [
+  {
+    title: "Book My Pandit",
+    description:
+      "Book trusted Pandits for Pooja, Havan, Sankalp and other spiritual ceremonies at your preferred location.",
+    href: "/book-my-pandit",
+    icon: UserRound,
+    label: "Explore Pooja Services",
+  },
+  {
+    title: "Consult an Astrologer",
+    description:
+      "Connect with experienced astrologers for Kundli, relationships, career, business and Muhurat guidance.",
+    href: "/astrology",
+    icon: Sparkles,
+    label: "Consult Now",
+  },
+  {
+    title: "Sacred Store",
+    description:
+      "Discover authentic devotional products associated with temples and deities, prepared with care and devotion.",
+    href: "/sacred-store",
+    icon: ShoppingBag,
+    label: "Explore Sacred Store",
+  },
+];
+
+export default function DivyaArpanServices() {
+  return (
+    <section className="relative z-20 -mt-[58px] pb-8">
+      <div className="mx-auto max-w-[1240px] px-6">
+
+        {/* SERVICE CARDS */}
+        <div className="grid grid-cols-1 gap-4 rounded-[25px] bg-white/95 p-3 shadow-[0_12px_35px_rgba(80,40,10,0.10)] md:grid-cols-3">
+          {services.map((service) => {
+            const Icon = service.icon;
+
+            return (
+              <Link
+                key={service.title}
+                href={service.href}
+                className="group relative flex min-h-[255px] flex-col overflow-hidden rounded-[22px] border border-orange-100 bg-gradient-to-b from-[#fffaf5] to-white px-7 py-5 text-center transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+              >
+                {/* Soft decorative glow */}
+                <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-orange-100/50 blur-3xl" />
+
+                <div className="relative flex h-full flex-col items-center">
+
+                  {/* Icon */}
+                  <div className="flex h-[84px] w-[96px] shrink-0 items-center justify-center rounded-[20px] bg-[#fff0e2] text-orange-600 shadow-sm ring-1 ring-orange-100 transition duration-300 group-hover:bg-orange-600 group-hover:text-white">
+                    <Icon size={43} strokeWidth={1.6} />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="mt-4 text-[23px] font-bold tracking-tight text-slate-950">
+                    {service.title}
+                  </h3>
+
+                  {/* Decorative divider */}
+                  <div className="mt-3 flex items-center justify-center gap-3 text-orange-500">
+                    <span className="h-px w-14 bg-orange-300" />
+                    <Flower2 size={17} strokeWidth={1.7} />
+                    <span className="h-px w-14 bg-orange-300" />
+                  </div>
+
+                  {/* Description */}
+                  <p className="mx-auto mt-3 max-w-[365px] text-[15px] leading-[1.55] text-slate-700">
+                    {service.description}
+                  </p>
+
+                  {/* Button */}
+                  <div className="mt-auto flex w-full items-center justify-center gap-3 rounded-xl bg-[#f45112] px-5 py-3 text-[16px] font-bold text-white shadow-md shadow-orange-600/15 transition duration-300 group-hover:bg-[#e94b00]">
+                    <span>{service.label}</span>
+
+                    <ArrowRight
+                      size={19}
+                      className="transition-transform duration-300 group-hover:translate-x-1"
+                    />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* TRUST STRIP */}
+        <div className="mt-5 rounded-[25px] border border-orange-100 bg-[#fffaf5] px-5 py-5 shadow-sm">
+          <div className="grid items-center md:grid-cols-5">
+
+            <TrustItem
+              icon={<ShieldCheck size={39} strokeWidth={1.5} />}
+              title="Verified Pandits"
+              subtitle="& Astrologers"
+            />
+
+            <TrustItem
+              icon={<BadgeCheck size={39} strokeWidth={1.5} />}
+              title="Authentic & Secure"
+              subtitle="Devotional Services"
+            />
+
+            <TrustItem
+              icon={<Clock3 size={39} strokeWidth={1.5} />}
+              title="Easy Booking"
+              subtitle="& Support"
+            />
+
+            <TrustItem
+              icon={<UsersRound size={39} strokeWidth={1.5} />}
+              title="Growing Devotee"
+              subtitle="Community"
+            />
+
+            <div className="flex items-center justify-center border-l border-orange-200 pl-5">
+              <div className="text-center">
+
+                <div className="flex justify-center text-orange-600">
+                  <Flower2 size={18} strokeWidth={1.6} />
+                </div>
+
+                <p className="mt-1 font-semibold text-slate-900">
+                  Pooja • Astrology • Store
+                </p>
+
+                <p className="mt-1 text-xs text-slate-600">
+                  One Divine Platform
+                </p>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* COMING SOON */}
+        <div className="mt-10 pb-8">
+          <div className="relative overflow-hidden rounded-[28px] border border-orange-100 bg-gradient-to-br from-[#fffaf5] via-white to-[#fff3e5] px-8 py-12 shadow-[0_12px_35px_rgba(80,40,10,0.08)]">
+
+            {/* Decorative glow */}
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-orange-100/50 blur-3xl" />
+
+            <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-orange-100/40 blur-3xl" />
+
+            <div className="relative mx-auto max-w-[900px] text-center">
+
+              {/* Decorative line */}
+              <div className="flex items-center justify-center gap-3 text-orange-500">
+                <span className="h-px w-16 bg-orange-300" />
+                <Flower2 size={21} strokeWidth={1.6} />
+                <span className="h-px w-16 bg-orange-300" />
+              </div>
+
+              {/* Heading */}
+              <h2 className="mt-4 font-serif text-4xl font-bold text-[#10264b] md:text-5xl">
+                India&apos;s New Destination for Devotion Is Almost Here
+              </h2>
+
+              {/* Description */}
+              <p className="mx-auto mt-4 max-w-[700px] text-base leading-7 text-slate-600 md:text-lg">
+                From booking sacred Poojas and connecting with verified
+                Pandits to spiritual guidance and devotional offerings —
+                DivyaArpan is bringing everything you need for your
+                spiritual journey together, in one beautiful platform.
+              </p>
+
+              {/* Highlight */}
+              <p className="mt-4 text-base font-semibold text-orange-600">
+                Be among the first to experience DivyaArpan.
+              </p>
+
+              {/* Notification Form */}
+              <form
+                onSubmit={(e) => e.preventDefault()}
+                className="mx-auto mt-8 max-w-[780px]"
+              >
+                <div className="grid gap-4 md:grid-cols-3">
+
+                  {/* Name */}
+                  <input
+                    type="text"
+                    placeholder="Your Name"
+                    className="h-14 rounded-xl border border-orange-100 bg-white px-5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                  />
+
+                  {/* Mobile */}
+                  <input
+                    type="tel"
+                    placeholder="Mobile Number"
+                    className="h-14 rounded-xl border border-orange-100 bg-white px-5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                  />
+
+                  {/* Email */}
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    className="h-14 rounded-xl border border-orange-100 bg-white px-5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                  />
+
+                </div>
+
+                {/* Button */}
+                <button
+                  type="submit"
+                  className="mt-4 inline-flex h-14 w-full items-center justify-center gap-3 rounded-xl bg-[#f45112] px-8 text-base font-bold text-white shadow-md shadow-orange-600/15 transition hover:bg-[#e94b00] md:w-auto md:min-w-[220px]"
+                >
+                  Keep Me Updated
+                  <ArrowRight size={19} />
+                </button>
+              </form>
+
+              {/* Privacy note */}
+              <p className="mt-4 text-xs text-slate-500">
+                We&apos;ll only use your details to share DivyaArpan launch
+                updates.
+              </p>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+function TrustItem({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-3 border-b border-orange-200 py-3 last:border-b-0 md:border-b-0 md:border-r md:py-0 md:last:border-r-0">
+
+      <div className="shrink-0 text-orange-600">
+        {icon}
+      </div>
+
+      <div className="text-left">
+        <p className="font-semibold leading-5 text-slate-900">
+          {title}
+        </p>
+
+        <p className="leading-5 text-slate-700">
+          {subtitle}
+        </p>
+      </div>
+
+    </div>
+  );
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getCurrentUser } from "../../../lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -13,6 +14,7 @@ function generateBookingId() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const user = await getCurrentUser();
 
     /*
     |--------------------------------------------------------------------------
@@ -418,6 +420,8 @@ export async function POST(request: NextRequest) {
 
         email: email || null,
 
+        devoteeId: user?.role === "DEVOTEE" ? user.devoteeId : null,
+
         status:
           matchingPandits.length > 0
             ? "SEARCHING"
@@ -474,6 +478,8 @@ export async function POST(request: NextRequest) {
         panditId: pandit.id,
 
         status: "PENDING",
+
+        offeredAmount: pandit.services[0]?.basePrice ?? null,
 
         dispatchRound: 1,
 

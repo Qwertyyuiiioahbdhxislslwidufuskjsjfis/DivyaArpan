@@ -1,10 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { requireRole } from "../../lib/auth";
 
 // GET - Fetch all devotees
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    }
+    const url = new URL(request.url);
+    const search = url.searchParams.get("search")?.trim() || "";
+    const status = url.searchParams.get("status");
     const devotees = await prisma.devotee.findMany({
+      where: {
+        ...(status === "active" ? { isActive: true } : {}),
+        ...(status === "inactive" ? { isActive: false } : {}),
+        ...(search ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { mobile: { contains: search } },
+            { email: { contains: search, mode: "insensitive" } },
+            { city: { contains: search, mode: "insensitive" } },
+            { state: { contains: search, mode: "insensitive" } },
+          ],
+        } : {}),
+      },
+      include: { _count: { select: { bookings: true, panditBookings: true, astrologyBookings: true } } },
       orderBy: {
         createdAt: "desc",
       },
@@ -30,6 +51,9 @@ export async function GET() {
 // POST - Create a new devotee
 export async function POST(request: Request) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    }
     const body = await request.json();
 
     const name =

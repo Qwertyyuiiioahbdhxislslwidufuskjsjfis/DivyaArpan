@@ -1,0 +1,70 @@
+"use client";
+
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+
+export default function PaymentFailed() {
+  const searchParams = useSearchParams();
+  const bookingId = searchParams.get("bookingId");
+
+  return (
+    <main className="min-h-screen bg-orange-50 flex items-center justify-center px-6 py-16">
+      <section className="max-w-xl w-full">
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
+            <span className="text-4xl">✕</span>
+          </div>
+
+          <h1 className="text-3xl font-bold text-red-600 mt-6">
+            Payment Failed
+          </h1>
+
+          <p className="text-gray-600 mt-4">
+            We were unable to complete your payment.
+          </p>
+
+          {bookingId && (
+            <div className="mt-6 bg-orange-50 rounded-xl p-5">
+              <p className="text-sm text-gray-500">
+                Booking ID
+              </p>
+
+              <p className="text-xl font-bold text-orange-700 mt-1">
+                {bookingId}
+              </p>
+            </div>
+          )}
+
+          <p className="text-gray-500 mt-6">
+            Your booking has not been marked as paid.
+            You can try the payment again.
+          </p>
+
+          <div className="mt-8 space-y-3">
+
+            {bookingId && (
+              <Link
+                href={`/payment?bookingId=${encodeURIComponent(
+                  bookingId
+                )}`}
+                className="block w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-xl text-lg font-semibold"
+              >
+                Try Payment Again
+              </Link>
+            )}
+
+            <Link
+              href="/"
+              className="block w-full border border-orange-600 text-orange-700 hover:bg-orange-50 py-4 rounded-xl text-lg font-semibold"
+            >
+              Back to Home
+            </Link>
+
+          </div>
+
+        </div>
+      </section>
+    </main>
+  );
+}

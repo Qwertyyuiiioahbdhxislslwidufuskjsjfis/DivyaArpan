@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { PrismaClient } from "@prisma/client";
 import DeleteTempleButton from "./DeleteTempleButton";
 
@@ -88,9 +89,12 @@ export default async function AdminTemplesPage() {
                 className="overflow-hidden rounded-2xl bg-white shadow-md"
               >
                 <div className="md:flex">
-                  <img
+                  <Image
                     src={temple.featuredImage}
                     alt={temple.name}
+                    width={1024}
+                    height={512}
+                    unoptimized
                     className="h-52 w-full object-cover md:w-64"
                   />
 

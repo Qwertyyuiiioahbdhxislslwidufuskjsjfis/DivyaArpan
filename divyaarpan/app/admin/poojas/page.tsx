@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -87,9 +88,12 @@ export default async function AdminPoojasPage() {
                 className="bg-white rounded-2xl shadow-md overflow-hidden"
               >
                 {pooja.image && (
-                  <img
+                  <Image
                     src={pooja.image}
                     alt={pooja.name}
+                    width={800}
+                    height={400}
+                    unoptimized
                     className="w-full h-48 object-cover"
                   />
                 )}

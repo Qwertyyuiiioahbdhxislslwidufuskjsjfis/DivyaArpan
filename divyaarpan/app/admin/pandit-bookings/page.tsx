@@ -73,7 +73,7 @@ export default function AdminPanditBookingsPage() {
   }
 
   useEffect(() => {
-    fetchBookings();
+    void Promise.resolve().then(fetchBookings);
   }, []);
 
   const filteredBookings = bookings.filter((booking) => {

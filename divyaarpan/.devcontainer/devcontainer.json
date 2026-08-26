@@ -1,0 +1,10 @@
+{
+  "name": "DivyaArpan",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "DivyaArpan",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}

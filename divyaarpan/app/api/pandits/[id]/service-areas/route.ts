@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { requireRole } from "../../../../lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -21,6 +22,9 @@ export async function GET(
   }
 ) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
+    }
     const { id } = await context.params;
 
     const panditId = Number(id);
@@ -132,6 +136,9 @@ export async function POST(
   }
 ) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
+    }
     const { id } = await context.params;
 
     const panditId = Number(id);

@@ -1,0 +1,70 @@
+import { prisma } from "@/lib/prisma";
+import { findEligiblePandits } from "./filters";
+import { rankPandits } from "./ranking";
+import { dispatchBookingOffers } from "./dispatcher";
+
+export async function runMatchingEngine(bookingId: number) {
+  console.log("");
+  console.log("======================================");
+  console.log("DIVYAARPAN SMART MATCH ENGINE STARTED");
+  console.log("======================================");
+
+  // Fetch booking
+  const booking = await prisma.panditBooking.findUnique({
+    where: {
+      id: bookingId,
+    },
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found.");
+  }
+
+  console.log("Booking ID :", booking.bookingId);
+
+  // Step 1
+  const eligiblePandits = await findEligiblePandits({
+    city: booking.city,
+    service: booking.service,
+    language: booking.language,
+  });
+
+  if (eligiblePandits.length === 0) {
+    console.log("❌ No eligible pandits found.");
+
+    await prisma.panditBooking.update({
+      where: {
+        id: booking.id,
+      },
+      data: {
+        status: "NO_PANDIT_AVAILABLE",
+      },
+    });
+
+    return [];
+  }
+
+  // Step 2
+  const rankedPandits = rankPandits(eligiblePandits);
+
+  // Step 3
+  const offers = await dispatchBookingOffers(
+    booking.id,
+    rankedPandits
+  );
+
+  if (offers.length === 0) {
+    await prisma.panditBooking.update({
+      where: { id: booking.id },
+      data: { status: "NO_PANDIT_AVAILABLE" },
+    });
+    return offers;
+  }
+
+  console.log("======================================");
+  console.log("MATCHING COMPLETED");
+  console.log("Offers Created :", offers.length);
+  console.log("======================================");
+
+  return offers;
+}

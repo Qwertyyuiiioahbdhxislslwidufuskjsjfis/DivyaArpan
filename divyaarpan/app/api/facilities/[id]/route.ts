@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { requireRole } from "../../../lib/auth";
 
 // DELETE - Delete one facility
 export async function DELETE(
@@ -7,6 +8,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    }
     const { id } = await params;
     const facilityId = Number(id);
 

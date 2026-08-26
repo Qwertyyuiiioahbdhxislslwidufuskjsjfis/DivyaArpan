@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -343,9 +344,12 @@ export default function EditPoojaPage() {
             />
 
             {pooja.image && (
-              <img
+              <Image
                 src={pooja.image}
                 alt={pooja.name}
+                width={640}
+                height={320}
+                unoptimized
                 className="mt-5 w-full max-w-md h-56 object-cover rounded-xl border"
               />
             )}

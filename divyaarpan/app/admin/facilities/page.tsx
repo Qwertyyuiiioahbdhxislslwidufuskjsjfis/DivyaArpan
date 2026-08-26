@@ -81,7 +81,7 @@ export default function AdminFacilitiesPage() {
   }
 
   useEffect(() => {
-    loadData();
+    void Promise.resolve().then(loadData);
   }, []);
 
   async function handleSubmit(

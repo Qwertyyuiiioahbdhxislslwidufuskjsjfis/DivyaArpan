@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { requireRole } from "../../lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -29,6 +30,9 @@ export async function GET() {
 // POST - Create a new pooja
 export async function POST(request: Request) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
+    }
     const body = await request.json();
 
     const {

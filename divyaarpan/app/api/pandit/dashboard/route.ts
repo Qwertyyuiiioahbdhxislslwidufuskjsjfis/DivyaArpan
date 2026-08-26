@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { requireRole } from "../../../lib/auth";
 
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await requireRole("PANDIT", "ADMIN");
+    if (!user) {
+      return NextResponse.json({ message: "Authentication required." }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
-    const panditId = Number(searchParams.get("panditId"));
+    const requestedPanditId = Number(searchParams.get("panditId"));
+    const panditId = user.role === "PANDIT" ? user.panditId : requestedPanditId;
 
     if (!panditId || Number.isNaN(panditId)) {
       return NextResponse.json(

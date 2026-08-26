@@ -1,0 +1,301 @@
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const {
+      bookingId,
+      type,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = body;
+
+    if (
+      !bookingId ||
+      !razorpay_order_id ||
+      !razorpay_payment_id ||
+      !razorpay_signature
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Payment verification details are incomplete.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    /*
+     * ==========================================================
+     * TEMPLE POOJA PAYMENT VERIFICATION
+     * ==========================================================
+     *
+     * Book My Pandit does not send type: "temple", so the
+     * existing Pandit verification flow below remains unchanged.
+     */
+
+    if (type === "temple") {
+      const templeBooking = await prisma.booking.findUnique({
+        where: {
+          bookingId,
+        },
+      });
+
+      if (!templeBooking) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Temple booking not found.",
+          },
+          {
+            status: 404,
+          }
+        );
+      }
+
+      if (!templeBooking.paymentOrderId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Payment order was not found for this booking.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      if (
+        templeBooking.paymentOrderId !==
+        razorpay_order_id
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Payment order does not match this booking.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+      if (!keySecret) {
+        console.error("Razorpay secret is missing.");
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Payment gateway is not configured.",
+          },
+          {
+            status: 500,
+          }
+        );
+      }
+
+      const generatedSignature = crypto
+        .createHmac("sha256", keySecret)
+        .update(
+          `${razorpay_order_id}|${razorpay_payment_id}`
+        )
+        .digest("hex");
+
+      if (
+        generatedSignature !==
+        razorpay_signature
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Payment verification failed.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      const updatedTempleBooking =
+        await prisma.booking.update({
+          where: {
+            bookingId,
+          },
+          data: {
+            paymentStatus: "PAID",
+            paymentId: razorpay_payment_id,
+            paymentOrderId: razorpay_order_id,
+            status: "Confirmed",
+            confirmedAt: new Date(),
+          },
+        });
+
+      return NextResponse.json({
+        success: true,
+        message: "Payment verified successfully.",
+        booking: {
+          bookingId: updatedTempleBooking.bookingId,
+          status: updatedTempleBooking.status,
+          paymentStatus:
+            updatedTempleBooking.paymentStatus,
+          paymentId:
+            updatedTempleBooking.paymentId,
+          paymentOrderId:
+            updatedTempleBooking.paymentOrderId,
+        },
+      });
+    }
+
+    /*
+     * ==========================================================
+     * EXISTING BOOK MY PANDIT VERIFICATION FLOW
+     * ==========================================================
+     *
+     * Do not change this branch.
+     */
+
+    const booking = await prisma.panditBooking.findUnique({
+      where: {
+        bookingId,
+      },
+    });
+
+    if (!booking) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Booking not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    if (!booking.paymentOrderId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Payment order was not found for this booking.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (booking.paymentOrderId !== razorpay_order_id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Payment order does not match this booking.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keySecret) {
+      console.error("Razorpay secret is missing.");
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Payment gateway is not configured.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    const generatedSignature = crypto
+      .createHmac("sha256", keySecret)
+      .update(
+        `${razorpay_order_id}|${razorpay_payment_id}`
+      )
+      .digest("hex");
+
+    if (
+      generatedSignature !==
+      razorpay_signature
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Payment verification failed.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const updatedBooking =
+      await prisma.panditBooking.update({
+        where: {
+          bookingId,
+        },
+        data: {
+          paymentStatus: "PAID",
+          paymentId: razorpay_payment_id,
+          paymentOrderId: razorpay_order_id,
+          status: "CONFIRMED",
+          confirmedAt: new Date(),
+        },
+      });
+
+    return NextResponse.json({
+      success: true,
+      message: "Payment verified successfully.",
+      booking: {
+        bookingId: updatedBooking.bookingId,
+        status: updatedBooking.status,
+        paymentStatus:
+          updatedBooking.paymentStatus,
+        paymentId:
+          updatedBooking.paymentId,
+        paymentOrderId:
+          updatedBooking.paymentOrderId,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "RAZORPAY PAYMENT VERIFICATION ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Unable to verify payment.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}

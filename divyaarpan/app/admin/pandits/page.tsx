@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { PrismaClient } from "@prisma/client";
 import PanditStatusActions from "./PanditStatusActions";
 
@@ -264,9 +265,12 @@ export default async function AdminPanditsPage() {
                     {/* Profile Image */}
 
                     {pandit.profileImage ? (
-                      <img
+                      <Image
                         src={pandit.profileImage}
                         alt={pandit.name}
+                        width={80}
+                        height={80}
+                        unoptimized
                         className={`h-20 w-20 rounded-2xl object-cover ${
                           pandit.isActive
                             ? ""

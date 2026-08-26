@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { requireRole } from "../../../../lib/auth";
 
 const allowedStatuses = [
   "Payment Pending",
@@ -8,11 +9,21 @@ const allowedStatuses = [
   "Cancelled",
 ];
 
+const allowedTransitions: Record<string, string[]> = {
+  "Payment Pending": ["Confirmed", "Cancelled"],
+  Confirmed: ["Completed", "Cancelled"],
+  Completed: [],
+  Cancelled: [],
+};
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    }
     const { id } = await params;
     const body = await request.json();
 
@@ -55,6 +66,17 @@ export async function PUT(
       );
     }
 
+    if (existingBooking.status === status) {
+      return NextResponse.json({ success: false, message: "Booking already has this status." }, { status: 409 });
+    }
+
+    if (!allowedTransitions[existingBooking.status]?.includes(status)) {
+      return NextResponse.json(
+        { success: false, message: `Cannot change status from ${existingBooking.status} to ${status}.` },
+        { status: 409 }
+      );
+    }
+
     const booking = await prisma.booking.update({
       where: {
         id: bookingId,
@@ -63,6 +85,11 @@ export async function PUT(
         status,
       },
     });
+    if (existingBooking.status !== booking.status) {
+      await prisma.bookingStatusHistory.create({
+        data: { bookingId: booking.id, fromStatus: existingBooking.status, toStatus: booking.status, actorRole: "ADMIN" },
+      });
+    }
 
     return NextResponse.json({
       success: true,

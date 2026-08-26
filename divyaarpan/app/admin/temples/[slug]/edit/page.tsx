@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -362,9 +363,12 @@ export default function EditTemplePage() {
                   Image Preview
                 </p>
 
-                <img
+                <Image
                   src={temple.featuredImage}
                   alt={temple.name}
+                  width={1024}
+                  height={512}
+                  unoptimized
                   className="w-full max-w-lg h-64 object-cover rounded-xl border"
                 />
               </div>

@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   MapPin,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { prisma } from "../lib/prisma";
 
 type Temple = {
   id: number;
@@ -14,18 +15,27 @@ type Temple = {
   state: string;
   featuredImage: string;
   description: string;
+  poojas: {
+    name: string;
+  }[];
 };
 
 async function getTemples(): Promise<Temple[]> {
-  const res = await fetch("http://localhost:3000/api/temples", {
-    cache: "no-store",
+  return prisma.temple.findMany({
+    include: {
+      poojas: {
+        where: {
+          isActive: true,
+        },
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      name: "asc",
+    },
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch temples");
-  }
-
-  return res.json();
 }
 
 export default async function Temples() {
@@ -61,8 +71,8 @@ export default async function Temples() {
           {/* Trust badges */}
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur">
-              <ShieldCheck size={17} className="text-green-300" />
-              Trusted Temples
+              <Sparkles size={17} className="text-amber-300" />
+              DivyaArpan temple listings
             </div>
 
             <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur">
@@ -125,16 +135,18 @@ export default async function Temples() {
               >
                 {/* Temple Image */}
                 <div className="relative overflow-hidden">
-                  <img
+                  <Image
                     src={temple.featuredImage}
                     alt={temple.name}
+                    width={800}
+                    height={400}
+                    unoptimized
                     className="h-64 w-full object-cover transition duration-500 group-hover:scale-105"
                   />
 
-                  {/* Verified Badge */}
-                  <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-green-700 shadow-md backdrop-blur">
-                    <ShieldCheck size={15} />
-                    Verified Temple
+                  <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-orange-700 shadow-md backdrop-blur">
+                    <Sparkles size={15} />
+                    DivyaArpan Listing
                   </div>
 
                   {/* Gradient */}
@@ -160,6 +172,10 @@ export default async function Temples() {
 
                   <p className="mt-5 line-clamp-3 min-h-[72px] leading-6 text-slate-600">
                     {temple.description}
+                  </p>
+
+                  <p className="mt-4 text-sm font-semibold text-orange-700">
+                    {temple.poojas.length} {temple.poojas.length === 1 ? "Pooja" : "Poojas"} available
                   </p>
 
                   <div className="mt-6 border-t border-orange-100 pt-5">

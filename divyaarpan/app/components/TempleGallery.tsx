@@ -2,6 +2,8 @@ type TempleGalleryProps = {
   images?: string[];
 };
 
+import Image from "next/image";
+
 export default function TempleGallery({ images = [] }: TempleGalleryProps) {
   return (
     <section className="mt-12">
@@ -11,10 +13,13 @@ export default function TempleGallery({ images = [] }: TempleGalleryProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {images.map((image, index) => (
-          <img
+          <Image
             key={index}
             src={image}
             alt={`Temple ${index + 1}`}
+            width={800}
+            height={400}
+            unoptimized
             className="w-full h-60 object-cover rounded-xl shadow-lg hover:scale-105 transition duration-300"
           />
         ))}

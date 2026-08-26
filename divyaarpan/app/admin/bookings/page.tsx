@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 export default async function AdminBookingsPage() {
   const bookings = await prisma.booking.findMany({
+    include: { statusHistory: { orderBy: { createdAt: "desc" } } },
     orderBy: {
       createdAt: "desc",
     },
@@ -87,6 +88,17 @@ export default async function AdminBookingsPage() {
                           }`}
                         >
                           {booking.status}
+                        </span>
+                        <span
+                          className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                            booking.paymentStatus === "PAID"
+                              ? "bg-green-100 text-green-700"
+                              : booking.status === "Cancelled"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          Payment: {booking.paymentStatus === "PAID" ? "Paid" : booking.status === "Cancelled" ? "Not due" : "Pending"}
                         </span>
                       </div>
 
@@ -196,6 +208,33 @@ export default async function AdminBookingsPage() {
                       </p>
                     </div>
                   )}
+                  <div className="mt-6 rounded-xl border border-orange-100 bg-orange-50 p-5">
+                    <p className="text-sm font-semibold text-orange-700">Status History</p>
+                    {booking.statusHistory.length === 0 ? (
+                      <p className="mt-2 text-sm text-gray-500">No status changes recorded.</p>
+                    ) : (
+                      <div className="mt-3 space-y-2">
+                        {booking.statusHistory.map((entry) => (
+                          <p key={entry.id} className="text-sm text-gray-700">
+                            {entry.fromStatus ? `${entry.fromStatus} → ` : "Created as "}{entry.toStatus} · {entry.createdAt.toLocaleString("en-IN")}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-6 flex flex-col gap-3 rounded-xl border border-orange-100 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-orange-700">Payment information</p>
+                      <p className="mt-2 text-sm text-gray-600">Order: {booking.paymentOrderId || "Not created"}</p>
+                      <p className="mt-1 text-sm text-gray-600">Payment: {booking.paymentId || "Not received"}</p>
+                    </div>
+                    <Link
+                      href={`/checkout?bookingId=${encodeURIComponent(booking.bookingId)}`}
+                      className="inline-flex items-center justify-center rounded-xl border border-orange-600 px-5 py-3 text-sm font-semibold text-orange-700 transition hover:bg-orange-50"
+                    >
+                      View Booking
+                    </Link>
+                  </div>
                   <BookingStatusControl
   bookingId={booking.id}
   currentStatus={booking.status}

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Booking" ADD COLUMN     "poojaMode" TEXT NOT NULL DEFAULT 'DEVOTEE_PRESENT';

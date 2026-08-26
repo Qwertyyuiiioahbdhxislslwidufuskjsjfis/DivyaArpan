@@ -365,7 +365,7 @@ export default function BookMyPanditPage() {
               </p>
 
               <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                Can't find the pooja you need?
+                  Can&apos;t find the pooja you need?
               </h2>
 
               <p className="mt-3 max-w-2xl leading-7 text-slate-600">

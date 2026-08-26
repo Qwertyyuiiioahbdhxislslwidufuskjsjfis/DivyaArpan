@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { requireRole } from "../../lib/auth";
 
 // GET - Fetch all gallery images
 export async function GET() {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    }
     const galleries = await prisma.gallery.findMany({
       include: {
         temple: true,
@@ -33,6 +37,9 @@ export async function GET() {
 // POST - Add a gallery image
 export async function POST(request: Request) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    }
     const body = await request.json();
 
     const templeId = Number(body.templeId);

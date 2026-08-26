@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 type Pooja = {
+  id?: number;
   name: string;
   price: string;
   duration: string;
@@ -9,11 +10,13 @@ type Pooja = {
 type TemplePoojasProps = {
   poojas: Pooja[];
   templeName: string;
+  templeId?: number;
 };
 
 export default function TemplePoojas({
   poojas,
   templeName,
+  templeId,
 }: TemplePoojasProps) {
   return (
     <section className="mt-16">
@@ -30,9 +33,24 @@ export default function TemplePoojas({
 
       </div>
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-
-        {poojas.map((pooja, index) => (
+      {poojas.length === 0 ? (
+        <div className="rounded-2xl border border-orange-100 bg-orange-50 px-6 py-12 text-center">
+          <p className="text-lg font-semibold text-slate-900">
+            Pooja details are being added for this temple.
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Please browse other temples or return here later for available services.
+          </p>
+          <Link
+            href="/temples"
+            className="mt-6 inline-flex rounded-xl bg-orange-600 px-5 py-3 font-semibold text-white transition hover:bg-orange-700"
+          >
+            Browse Temples
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+          {poojas.map((pooja, index) => (
 
           <div
             key={pooja.name}
@@ -94,11 +112,9 @@ export default function TemplePoojas({
               <hr className="my-6" />
 
               <Link
-                href={`/booking?temple=${encodeURIComponent(
-                  templeName
-                )}&pooja=${encodeURIComponent(
-                  pooja.name
-                )}`}
+                href={pooja.id && templeId
+                  ? `/booking?templeId=${templeId}&poojaId=${pooja.id}&temple=${encodeURIComponent(templeName)}&pooja=${encodeURIComponent(pooja.name)}`
+                  : `/booking?temple=${encodeURIComponent(templeName)}&pooja=${encodeURIComponent(pooja.name)}`}
                 className="block w-full text-center bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-xl transition"
               >
                 Book Now
@@ -108,9 +124,9 @@ export default function TemplePoojas({
 
           </div>
 
-        ))}
-
-      </div>
+          ))}
+        </div>
+      )}
 
     </section>
   );

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { requireRole } from "../../../../../lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -8,6 +9,9 @@ export async function POST(
   { params }: { params: Promise<{ offerId: string }> }
 ) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    }
     const { offerId } = await params;
 
     const offerIdNumber = Number(offerId);
@@ -60,13 +64,16 @@ export async function POST(
       });
 
       if (pendingOffers === 0) {
-        await tx.panditBooking.update({
+        const updatedBooking = await tx.panditBooking.update({
           where: {
             id: offer.bookingId,
           },
           data: {
             status: "NO_PANDIT_AVAILABLE",
           },
+        });
+        await tx.panditBookingStatusHistory.create({
+          data: { bookingId: updatedBooking.id, fromStatus: "SEARCHING", toStatus: updatedBooking.status, actorRole: "ADMIN" },
         });
       }
 

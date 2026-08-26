@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { runMatchingEngine } from "@/lib/matching-engine";
+import { getCurrentUser } from "@/app/lib/auth";
+import { hasGuestBookingAccess, setGuestBookingCookie } from "@/app/lib/booking-access";
+
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -17,9 +21,13 @@ if (process.env.NODE_ENV !== "production") {
 export async function GET(request: NextRequest) {
   try {
     const bookingId = request.nextUrl.searchParams.get("bookingId");
+    const user = await getCurrentUser();
 
     // Fetch one specific booking
     if (bookingId) {
+      if (!user && !hasGuestBookingAccess(request, bookingId)) {
+        return NextResponse.json({ success: false, error: "Booking not found." }, { status: 404 });
+      }
       const booking = await prisma.panditBooking.findUnique({
         where: {
           bookingId,
@@ -38,6 +46,13 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      if (user?.role === "DEVOTEE" && booking.devoteeId !== user.devoteeId) {
+        return NextResponse.json(
+          { success: false, error: "Booking not found." },
+          { status: 404 }
+        );
+      }
+
       return NextResponse.json({
         success: true,
         booking,
@@ -45,6 +60,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all bookings
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Admin access required." },
+        { status: 403 }
+      );
+    }
+
     const bookings = await prisma.panditBooking.findMany({
       orderBy: {
         createdAt: "desc",
@@ -74,6 +96,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const user = await getCurrentUser();
 
     const {
       service,
@@ -124,29 +147,39 @@ export async function POST(request: Request) {
     const bookingId = `DPA-PND-${year}${month}${day}-${randomCode}`;
 
     const booking = await prisma.panditBooking.create({
-      data: {
-        bookingId,
+  data: {
+    bookingId,
 
-        service: service.trim(),
-        city: city.trim(),
-        address: address.trim(),
-        language: language.trim(),
+    service: service.trim(),
+    city: city.trim(),
+    address: address.trim(),
+    language: language.trim(),
 
-        date,
-        time,
+    date,
+    time,
 
-        sankalp: sankalp?.trim() || null,
+    sankalp: sankalp?.trim() || null,
 
-        devoteeName: devoteeName.trim(),
-        mobile: mobile.trim(),
-        email: email?.trim() || null,
+    devoteeName: devoteeName.trim(),
+    mobile: mobile.trim(),
+    email: email?.trim() || null,
 
-        status: "AWAITING_PAYMENT",
-paymentStatus: "PENDING",
-      },
+    devoteeId: user?.role === "DEVOTEE" ? user.devoteeId : null,
+
+    // Booking enters the Smart Matching Engine immediately
+    status: "SEARCHING",
+
+    // Customer pays only after a pandit accepts
+    paymentStatus: "PENDING",
+  },
+});
+    await prisma.panditBookingStatusHistory.create({
+      data: { bookingId: booking.id, toStatus: booking.status, actorRole: user?.role || "GUEST" },
     });
 
-    return NextResponse.json(
+// 🚀 Start Smart Matching Engine
+await runMatchingEngine(booking.id);
+    const response = NextResponse.json(
       {
         success: true,
         message: "Pandit booking created successfully.",
@@ -156,6 +189,8 @@ paymentStatus: "PENDING",
         status: 201,
       }
     );
+    if (!user) setGuestBookingCookie(response, request, booking.bookingId);
+    return response;
   } catch (error) {
     console.error("CREATE PANDIT BOOKING ERROR:", error);
 

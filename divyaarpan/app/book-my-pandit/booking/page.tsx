@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -36,7 +36,7 @@ const timeSlots = [
   "6:00 PM - 8:00 PM",
 ];
 
-export default function PanditBookingPage() {
+function PanditBookingPageContent() {
   const searchParams = useSearchParams();
 
   const service =
@@ -96,17 +96,11 @@ const [panditPreference, setPanditPreference] = useState(
   searchParams.get("panditPreference") || "Any Verified Pandit"
 );
 
-const [samagriRequired, setSamagriRequired] = useState(
-  searchParams.get("samagriRequired") !== "false"
-);
-
-const [purpose, setPurpose] = useState(
-  searchParams.get("purpose") || ""
-);
-
-const [additionalRequirements, setAdditionalRequirements] = useState(
-  searchParams.get("additionalRequirements") || ""
-);
+  const samagriRequired =
+    searchParams.get("samagriRequired") !== "false";
+  const purpose = searchParams.get("purpose") || "";
+  const additionalRequirements =
+    searchParams.get("additionalRequirements") || "";
 
   const canContinue =
   city.trim().length > 0 &&
@@ -118,6 +112,19 @@ const [additionalRequirements, setAdditionalRequirements] = useState(
   houseNo.trim().length > 0 &&
   area.trim().length > 0 &&
   pinCode.trim().length === 6;
+
+  const completeAddress = [
+    houseNo,
+    buildingName,
+    address,
+    area,
+    landmark,
+    city,
+    pinCode,
+  ]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(", ");
 
   const reviewUrl = `/book-my-pandit/review?${new URLSearchParams({
   service,
@@ -138,7 +145,7 @@ const [additionalRequirements, setAdditionalRequirements] = useState(
   area,
   landmark,
   pinCode,
-  address,
+  address: completeAddress,
 
   panditPreference,
   samagriRequired: String(samagriRequired),
@@ -445,7 +452,7 @@ const [additionalRequirements, setAdditionalRequirements] = useState(
   </select>
 
   <p className="mt-2 text-xs text-slate-500">
-    We'll try our best to arrange your preferred pandit based on
+    We&apos;ll try our best to arrange your preferred pandit based on
     availability.
   </p>
 </div>
@@ -828,7 +835,7 @@ const [additionalRequirements, setAdditionalRequirements] = useState(
                 )}
 
                 <p className="mt-4 text-center text-xs leading-5 text-slate-500">
-                  You won't be charged at this step.
+                    You won&apos;t be charged at this step.
                 </p>
               </div>
             </div>
@@ -836,6 +843,26 @@ const [additionalRequirements, setAdditionalRequirements] = useState(
         </div>
       </section>
     </main>
+  );
+}
+
+
+export default function PanditBookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#fffaf5] flex items-center justify-center px-6">
+          <div className="text-center">
+            <div className="text-3xl">🪷</div>
+            <p className="mt-3 font-semibold text-slate-700">
+              Preparing your booking...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <PanditBookingPageContent />
+    </Suspense>
   );
 }
 

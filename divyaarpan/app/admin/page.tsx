@@ -41,7 +41,15 @@ export default function AdminDashboard() {
         "Manage immediate and scheduled Pandit requests, assignments and booking status.",
       icon: "⚡",
       href: "/admin/pandit-bookings",
-      available: false,
+      available: true,
+    },
+    {
+      title: "Astrology Consultations",
+      description:
+        "Review astrology consultation requests, payments and status.",
+      icon: "🔭",
+      href: "/admin/astrology-bookings",
+      available: true,
     },
     {
       title: "Temple Gallery",
@@ -65,7 +73,7 @@ export default function AdminDashboard() {
         "View and manage registered devotees.",
       icon: "👥",
       href: "/admin/devotees",
-      available: false,
+      available: true,
     },
   ];
 

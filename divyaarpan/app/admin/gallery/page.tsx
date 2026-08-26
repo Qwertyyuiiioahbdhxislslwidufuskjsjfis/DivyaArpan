@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 
 type Temple = {
@@ -79,7 +80,7 @@ export default function AdminGalleryPage() {
   }
 
   useEffect(() => {
-    loadData();
+    void Promise.resolve().then(loadData);
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -331,9 +332,12 @@ export default function AdminGalleryPage() {
                   key={gallery.id}
                   className="bg-white rounded-2xl shadow-md overflow-hidden"
                 >
-                  <img
+                  <Image
                     src={gallery.imageUrl}
                     alt={gallery.temple.name}
+                    width={800}
+                    height={400}
+                    unoptimized
                     className="w-full h-56 object-cover"
                   />
 

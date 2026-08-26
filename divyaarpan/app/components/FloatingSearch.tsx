@@ -5,7 +5,7 @@ import { Search, Calendar, MapPin } from "lucide-react";
 
 export default function FloatingSearch() {
   return (
-    <section className="relative -mt-20 z-30 px-6">
+    <section className="relative z-30 px-6 py-8">
       <div className="max-w-6xl mx-auto">
         <div className="rounded-3xl bg-white shadow-2xl border border-orange-100 p-6 lg:p-8">
 

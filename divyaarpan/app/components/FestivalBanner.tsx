@@ -1,9 +1,47 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 import Link from "next/link";
 import { CalendarDays, Sparkles, ArrowRight } from "lucide-react";
 
 export default function FestivalBanner() {
+  const targetTime = new Date("2026-09-14T11:20:00+05:30").getTime();
+  const isMounted = useRef(false);
+
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    const updateCountdown = () => {
+      if (!isMounted.current) return;
+
+      const difference = Math.max(0, targetTime - Date.now());
+
+      setTimeLeft({
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / (1000 * 60)) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      });
+    };
+
+    updateCountdown();
+
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => {
+      isMounted.current = false;
+      clearInterval(interval);
+    };
+  }, [targetTime]);
+
   return (
     <section className="py-16 px-6">
       <div className="max-w-7xl mx-auto">
@@ -69,10 +107,10 @@ export default function FestivalBanner() {
                 <div className="mt-8 grid grid-cols-4 gap-3">
 
                   {[
-                    ["12", "Days"],
-                    ["08", "Hours"],
-                    ["24", "Minutes"],
-                    ["51", "Seconds"],
+                    [String(timeLeft.days), "Days"],
+                    [String(timeLeft.hours).padStart(2, "0"), "Hours"],
+                    [String(timeLeft.minutes).padStart(2, "0"), "Minutes"],
+                    [String(timeLeft.seconds).padStart(2, "0"), "Seconds"],
                   ].map(([value, label]) => (
                     <div
                       key={label}

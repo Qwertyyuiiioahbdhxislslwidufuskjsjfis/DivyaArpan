@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,7 +18,7 @@ import {
   HeartHandshake,
 } from "lucide-react";
 
-export default function PanditBookingReviewPage() {
+function PanditBookingReviewPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -155,10 +155,10 @@ const additionalRequirements =
       }
 
       router.push(
-        `/book-my-pandit/payment?bookingId=${encodeURIComponent(
-          bookingId
-        )}`
-      );
+  `/book-my-pandit/searching?bookingId=${encodeURIComponent(
+    bookingId
+  )}`
+);
     } catch (err) {
       console.error("BOOKING SUBMISSION ERROR:", err);
 
@@ -877,6 +877,25 @@ function ReviewItem({
       </div>
 
     </div>
+  );
+}
+
+
+export default function PanditBookingReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#fffaf5] px-6 py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-lg font-semibold text-gray-700">
+              Loading booking review...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <PanditBookingReviewPageContent />
+    </Suspense>
   );
 }
 

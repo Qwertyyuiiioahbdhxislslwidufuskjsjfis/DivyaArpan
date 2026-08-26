@@ -1220,7 +1220,7 @@ export default function PanditDetailsPage() {
 
                   <p className="mt-2 text-sm leading-6 text-blue-800">
                     Confirm that the
-                    Pandit's identity,
+                    Pandit&apos;s identity,
                     contact information,
                     service details and
                     verification

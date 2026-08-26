@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
 type ServiceArea = {
   id: number;
@@ -67,7 +67,7 @@ export default function PanditServiceAreasPage() {
   |--------------------------------------------------------------------------
   */
 
-  async function fetchPandit() {
+  const fetchPandit = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -108,13 +108,13 @@ export default function PanditServiceAreasPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [panditId]);
 
   useEffect(() => {
     if (panditId) {
-      fetchPandit();
+      void Promise.resolve().then(fetchPandit);
     }
-  }, [panditId]);
+  }, [panditId, fetchPandit]);
 
   /*
   |--------------------------------------------------------------------------

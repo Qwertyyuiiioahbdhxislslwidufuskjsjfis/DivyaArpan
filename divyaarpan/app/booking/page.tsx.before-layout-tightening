@@ -1,0 +1,566 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { temples } from "../data/temples";
+
+export default function Booking() {
+
+  const searchParams = useSearchParams();
+
+  const urlTemple = searchParams.get("temple");
+  const urlPooja = searchParams.get("pooja");
+
+  const poojaMode =
+    searchParams.get("mode") === "ON_BEHALF"
+      ? "ON_BEHALF"
+      : "DEVOTEE_PRESENT";
+
+
+  const initialTemple =
+    temples.find((item) => item.name === urlTemple) || temples[0];
+
+
+  const [selectedTemple, setSelectedTemple] =
+    useState(initialTemple);
+
+
+  const [selectedPooja, setSelectedPooja] =
+    useState(
+      initialTemple.poojas.find(
+        (item) => item.name === urlPooja
+      ) || initialTemple.poojas[0]
+    );
+
+
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [devotees, setDevotees] = useState("1");
+  const [sankalp, setSankalp] = useState("");
+
+
+
+  // ------------------------------------------------------------
+// PERSISTENT BOOKING DRAFT KEY
+// ------------------------------------------------------------
+
+const draftKey = `divyaArpanBookingDraft_${poojaMode}`;
+
+
+// ------------------------------------------------------------
+// HYDRATION-SAFE BOOKING ID
+// ------------------------------------------------------------
+
+const [bookingId, setBookingId] = useState("");
+
+useEffect(() => {
+  try {
+    const savedDraft = localStorage.getItem(draftKey);
+
+    if (savedDraft) {
+      const draft = JSON.parse(savedDraft);
+
+      if (draft.bookingId) {
+        setBookingId(draft.bookingId);
+        return;
+      }
+    }
+
+    const newBookingId =
+      "DA" + Math.floor(100000 + Math.random() * 900000);
+
+    setBookingId(newBookingId);
+  } catch (error) {
+    console.error(
+      "DIVYAARPAN: could not initialize booking ID",
+      error
+    );
+  }
+}, [draftKey]);
+
+
+const saveBooking = async () => {
+
+  console.log("DIVYAARPAN: saveBooking() CALLED");
+
+  const bookingData = {
+
+    bookingId,
+
+    temple: selectedTemple.name,
+
+    pooja: selectedPooja.name,
+
+    poojaMode,
+
+    price: selectedPooja.price,
+
+    duration: selectedPooja.duration,
+
+    name,
+
+    mobile,
+
+    email,
+
+    date,
+
+    time,
+
+    devotees,
+
+    sankalp,
+
+  };
+
+
+  try {
+
+    const response = await fetch("/api/bookings", {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify(bookingData),
+
+    });
+
+
+    const result = await response.json();
+
+
+    if (result.success) {
+
+      window.location.href =
+      `/checkout?bookingId=${bookingId}`;
+
+    } else {
+
+      alert("Booking failed. Please try again.");
+
+    }
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Something went wrong.");
+
+  }
+
+};
+
+
+
+
+
+  return (
+    <main className="min-h-screen bg-[#fff9f3]">
+      <section className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
+
+        {/* PAGE INTRO */}
+        <div className="mx-auto max-w-3xl text-center">
+
+          <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">
+            DivyaArpan
+          </p>
+
+          <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-2xl shadow-sm">
+            🪷
+          </div>
+
+          <h1 className="mt-5 font-serif text-4xl font-bold tracking-tight text-[#10264b] md:text-5xl">
+            {poojaMode === "ON_BEHALF"
+              ? "Ghar Baithe Pooja"
+              : "Mandir Pooja"}
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-2xl text-base font-medium leading-7 text-[#10264b] md:text-lg">
+            Aap bhakti kijiye. Baaki hum sambhalenge.
+          </p>
+
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-500 md:text-base">
+            {poojaMode === "ON_BEHALF"
+              ? "Pooja aapki taraf se hum karayenge, with required Samagri and trusted Pandit coordination."
+              : "Aap mandir jaiye. Pooja ki taiyari, required Samagri and trusted Pandit coordination hum sambhalenge."}
+          </p>
+        </div>
+
+        {/* SIMPLE BOOKING JOURNEY */}
+        <div className="mx-auto mt-8 max-w-4xl rounded-2xl border border-orange-100 bg-white px-4 py-4 shadow-sm md:px-7">
+          <div className="grid grid-cols-4 text-center">
+
+            <div className="relative">
+              <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#f45112] text-sm font-bold text-white">
+                1
+              </div>
+              <p className="mt-2 text-xs font-semibold text-[#f45112] md:text-sm">
+                Pooja
+              </p>
+            </div>
+
+            <div className="relative">
+              <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-sm font-bold text-orange-500">
+                2
+              </div>
+              <p className="mt-2 text-xs font-medium text-slate-500 md:text-sm">
+                Details
+              </p>
+            </div>
+
+            <div className="relative">
+              <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-sm font-bold text-orange-500">
+                3
+              </div>
+              <p className="mt-2 text-xs font-medium text-slate-500 md:text-sm">
+                Review
+              </p>
+            </div>
+
+            <div className="relative">
+              <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-sm font-bold text-orange-500">
+                4
+              </div>
+              <p className="mt-2 text-xs font-medium text-slate-500 md:text-sm">
+                Payment
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* MAIN FORM */}
+        <div className="mt-7 grid gap-6 lg:grid-cols-2">
+
+          {/* YOUR POOJA */}
+          <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-[0_15px_45px_rgba(80,40,10,0.07)] md:p-8">
+
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-xl">
+                🛕
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-500">
+                  Step 1
+                </p>
+
+                <h2 className="mt-1 font-serif text-2xl font-bold text-[#10264b]">
+                  Your Pooja
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Choose where and which Pooja you would like to arrange.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-7">
+              <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                Temple
+              </label>
+
+              <select
+                value={selectedTemple.id}
+                onChange={(e) => {
+                  const temple =
+                    temples.find((item) => item.id === e.target.value) ||
+                    temples[0];
+
+                  setSelectedTemple(temple);
+                  setSelectedPooja(temple.poojas[0]);
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+              >
+                {temples.map((temple) => (
+                  <option key={temple.id} value={temple.id}>
+                    {temple.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-5">
+              <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                Pooja
+              </label>
+
+              <select
+                value={selectedPooja.name}
+                onChange={(e) => {
+                  const pooja = selectedTemple.poojas.find(
+                    (item) => item.name === e.target.value
+                  );
+
+                  if (pooja) {
+                    setSelectedPooja(pooja);
+                  }
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+              >
+                {selectedTemple.poojas.map((pooja) => (
+                  <option key={pooja.name}>
+                    {pooja.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                  Preferred Date
+                </label>
+
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                  Preferred Time
+                </label>
+
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+                />
+              </div>
+
+            </div>
+
+            <div className="mt-5">
+              <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                Number of Devotees
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                value={devotees}
+                onChange={(e) => setDevotees(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+              />
+            </div>
+
+          </div>
+
+          {/* YOUR DETAILS */}
+          <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-[0_15px_45px_rgba(80,40,10,0.07)] md:p-8">
+
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-xl">
+                🙏
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-500">
+                  Step 2
+                </p>
+
+                <h2 className="mt-1 font-serif text-2xl font-bold text-[#10264b]">
+                  Your Details
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Just a few details so we can keep your Pooja booking clear and connected.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-7">
+              <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                Devotee Name
+              </label>
+
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your full name"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3.5 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+              />
+            </div>
+
+            <div className="mt-5">
+              <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                Mobile Number
+              </label>
+
+              <input
+                type="tel"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                placeholder="Enter mobile number"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3.5 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+              />
+            </div>
+
+            <div className="mt-5">
+              <label className="mb-2 block text-sm font-semibold text-[#10264b]">
+                Email Address
+              </label>
+
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email address"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3.5 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+              />
+            </div>
+
+            {/* SANKALP */}
+            <div className="mt-6 rounded-2xl border border-orange-100 bg-[#fff9f3] p-5">
+
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🪷</span>
+
+                <div>
+                  <h3 className="font-semibold text-[#10264b]">
+                    Your Sankalp / Prayer
+                  </h3>
+
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Optional — share what is in your heart.
+                  </p>
+                </div>
+              </div>
+
+              <textarea
+                value={sankalp}
+                onChange={(e) => setSankalp(e.target.value)}
+                placeholder="Write your prayer or sankalp..."
+                rows={4}
+                className="mt-4 w-full resize-none rounded-xl border border-orange-100 bg-white px-4 py-3.5 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-50"
+              />
+
+            </div>
+
+          </div>
+        </div>
+
+        {/* REVIEW */}
+        <div className="mt-6 overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-[0_15px_45px_rgba(80,40,10,0.07)]">
+
+          <div className="border-b border-orange-100 bg-[#fff4e8] px-6 py-5 md:px-8">
+
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-500">
+              Step 3
+            </p>
+
+            <div className="mt-1 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+              <h2 className="font-serif text-2xl font-bold text-[#10264b]">
+                Review Your Pooja
+              </h2>
+
+              <span className="text-sm text-slate-500">
+                Booking ID: <strong className="text-slate-700">{bookingId}</strong>
+              </span>
+            </div>
+
+          </div>
+
+          <div className="grid gap-4 p-6 md:grid-cols-2 md:p-8 lg:grid-cols-4">
+
+            <div className="rounded-2xl bg-[#fff9f3] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Temple
+              </p>
+              <p className="mt-1 font-semibold text-[#10264b]">
+                {selectedTemple.name}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#fff9f3] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Pooja
+              </p>
+              <p className="mt-1 font-semibold text-[#10264b]">
+                {selectedPooja.name}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#fff9f3] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Duration
+              </p>
+              <p className="mt-1 font-semibold text-[#10264b]">
+                {selectedPooja.duration}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-orange-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-orange-500">
+                Pooja Price
+              </p>
+              <p className="mt-1 text-xl font-bold text-[#f45112]">
+                {selectedPooja.price}
+              </p>
+            </div>
+
+          </div>
+
+          {/* FINAL REASSURANCE + CTA */}
+          <div className="border-t border-orange-100 px-6 py-6 md:px-8">
+
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+
+              <div className="flex items-start gap-3">
+
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-100 text-lg">
+                  🪷
+                </div>
+
+                <div>
+                  <p className="font-semibold text-[#10264b]">
+                    Aap bhakti kijiye. Baaki hum sambhalenge.
+                  </p>
+
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                    DivyaArpan coordinates the required Samagri, Pooja arrangements
+                    and trusted Pandit coordination for your selected Pooja.
+                  </p>
+                </div>
+
+              </div>
+
+              <button
+                onClick={saveBooking}
+                className="inline-flex min-h-[54px] items-center justify-center rounded-xl bg-[#f45112] px-8 text-base font-bold text-white shadow-lg shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-[#e94b00] hover:shadow-xl"
+              >
+                Continue to Checkout
+                <span className="ml-2 text-lg">→</span>
+              </button>
+
+            </div>
+          </div>
+
+        </div>
+
+        {/* QUIET TRUST MESSAGE */}
+        <div className="mx-auto mt-6 flex max-w-3xl items-center justify-center gap-2 text-center text-sm text-slate-500">
+          <span>🔒</span>
+          <span>Your details are used only to arrange and confirm your Pooja.</span>
+        </div>
+
+      </section>
+    </main>
+  )
+
+
+}

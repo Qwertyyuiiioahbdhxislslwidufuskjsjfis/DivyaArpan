@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   Clock3,
@@ -10,6 +12,7 @@ import {
 import TempleGallery from "../../components/TempleGallery";
 import TempleMap from "../../components/TempleMap";
 import TemplePoojas from "../../components/TemplePoojas";
+import { prisma } from "../../lib/prisma";
 
 type Temple = {
   id: number;
@@ -33,6 +36,7 @@ type Temple = {
   }[];
 
   poojas: {
+    id: number;
     name: string;
     price: string;
     duration: string;
@@ -40,18 +44,27 @@ type Temple = {
 };
 
 async function getTemple(slug: string): Promise<Temple> {
-  const res = await fetch(
-    `http://localhost:3000/api/temples/${slug}`,
-    {
-      cache: "no-store",
+  const temple = await prisma.temple.findUnique({
+    where: {
+      slug,
     }
-  );
+    ,
+    include: {
+      facilities: true,
+      galleries: true,
+      poojas: {
+        where: {
+          isActive: true,
+        },
+      },
+    },
+  });
 
-  if (!res.ok) {
-    throw new Error("Temple not found");
+  if (!temple) {
+    notFound();
   }
 
-  return res.json();
+  return temple;
 }
 
 export default async function TemplePage({
@@ -152,9 +165,12 @@ export default async function TemplePage({
 
               <div className="overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-2 shadow-2xl backdrop-blur">
 
-                <img
+                <Image
                   src={temple.featuredImage}
                   alt={temple.name}
+                  width={1200}
+                  height={630}
+                  unoptimized
                   className="h-[420px] w-full rounded-2xl object-cover"
                 />
 
@@ -322,6 +338,7 @@ export default async function TemplePage({
         <TemplePoojas
           poojas={temple.poojas}
           templeName={temple.name}
+          templeId={temple.id}
         />
 
       </section>
@@ -413,7 +430,7 @@ export default async function TemplePage({
 
               <p className="mt-4 max-w-2xl leading-7 text-orange-100">
                 Select your ceremony, preferred language, location
-                and date through DivyaArpan's Book My Pandit service.
+                and date through DivyaArpan&apos;s Book My Pandit service.
               </p>
 
             </div>

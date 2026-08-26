@@ -1,154 +1,73 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowRight,
-  CalendarDays,
-  ShieldCheck,
-  Star,
-} from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Flower2 } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-orange-900 via-orange-800 to-amber-700 pt-32 pb-36">
+    <section className="relative -mt-px">
+      <div className="relative h-[635px] w-full overflow-hidden bg-[#fff8ed]">
+        <Image
+          src="/images/hero/hero-temple.jpg"
+          alt="DivyaArpan Temple"
+          width={1400}
+          height={635}
+          priority
+          sizes="100vw"
+          className="absolute inset-0 h-auto w-full max-w-none"
+        />
 
-      {/* Background Glow */}
-      <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
-      <div className="absolute bottom-0 right-0 h-[450px] w-[450px] rounded-full bg-yellow-300/10 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#fff8ed]/95 via-[#fff8ed]/45 via-[45%] to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[170px] bg-gradient-to-t from-white/45 to-transparent" />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2">
+        <div className="absolute inset-0">
+          <div className="mx-auto h-full max-w-[1440px] px-6 lg:px-[104px]">
+            <div className="flex h-full items-start pt-[66px]">
+              <div className="max-w-[650px]">
+                <div className="mb-5 flex items-center gap-3 text-[15px] font-semibold uppercase tracking-[0.12em] text-[#ef4d0b]">
+                  <span className="h-px w-8 bg-[#ef4d0b]" />
+                  <span>||</span>
+                  <span>Faith • Tradition • Devotion</span>
+                  <span>||</span>
+                  <span className="h-px w-8 bg-[#ef4d0b]" />
+                </div>
 
-        {/* Left Content */}
-        <div>
+                <h1 className="font-serif text-[58px] font-bold leading-[1.02] tracking-[-0.03em] text-[#4a2418]">
+                  Experience Divinity,
+                  <br />
+                  Every Day
+                </h1>
 
-          <span className="inline-flex rounded-full border border-orange-300/30 bg-white/10 px-5 py-2 text-sm font-semibold text-orange-100 backdrop-blur">
-            🙏 India's Trusted Spiritual Platform
-          </span>
+                <p className="mt-5 max-w-[600px] text-[19px] leading-[1.5] text-[#243b5a]">
+                  Your one-stop platform for Poojas, Astrological Guidance,
+                  <br />
+                  Sacred Products and Pandit Services.
+                </p>
 
-          <h1 className="mt-8 text-5xl font-extrabold leading-tight text-white md:text-6xl lg:text-7xl">
-            Temple Poojas,
-            <span className="block text-amber-300">
-              Verified Pandits
-            </span>
-            All At One Place.
-          </h1>
+                <div className="mt-7 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/book-my-pandit"
+                    className="group flex h-[54px] items-center gap-3 rounded-[12px] bg-[#f45112] px-7 text-[17px] font-bold text-white shadow-sm transition hover:bg-[#e94b00]"
+                  >
+                    <Flower2 className="h-5 w-5" />
+                    <span>Book My Pandit</span>
+                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
 
-          <p className="mt-8 max-w-xl text-lg leading-8 text-orange-100">
-            Book authentic temple poojas, experienced pandits,
-            homas, donations and spiritual services from verified
-            temples across India.
-          </p>
-
-          <div className="mt-10 flex flex-wrap gap-4">
-
-            <Link
-              href="/book-my-pandit"
-              className="flex items-center gap-2 rounded-xl bg-white px-7 py-4 font-semibold text-orange-700 transition hover:scale-105"
-            >
-              Book My Pandit
-              <ArrowRight size={18} />
-            </Link>
-
-            <Link
-              href="/temples"
-              className="rounded-xl border border-white px-7 py-4 font-semibold text-white transition hover:bg-white hover:text-orange-700"
-            >
-              Explore Temples
-            </Link>
-
+                  <Link
+                    href="/poojas"
+                    className="group flex h-[54px] items-center gap-3 rounded-[12px] border-2 border-[#f45112] bg-white/80 px-7 text-[17px] font-bold text-[#ef4d0b] transition hover:bg-white"
+                  >
+                    <span>Explore Poojas</span>
+                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* Stats */}
-
-          <div className="mt-14 grid grid-cols-3 gap-5">
-
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur">
-              <h3 className="text-3xl font-bold text-white">
-                500+
-              </h3>
-
-              <p className="mt-2 text-orange-100">
-                Temples
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur">
-              <h3 className="text-3xl font-bold text-white">
-                1000+
-              </h3>
-
-              <p className="mt-2 text-orange-100">
-                Verified Pandits
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur">
-              <h3 className="text-3xl font-bold text-white">
-                24x7
-              </h3>
-
-              <p className="mt-2 text-orange-100">
-                Booking
-              </p>
-            </div>
-
-          </div>
-
         </div>
-
-        {/* Right Side */}
-
-        <div className="relative">
-
-          <div className="overflow-hidden rounded-3xl shadow-2xl">
-
-            <Image
-              src="/images/hero/hero-temple.jpg"
-              alt="Temple"
-              width={700}
-              height={700}
-              priority
-              className="h-[600px] w-full object-cover"
-            />
-
-          </div>
-
-          {/* Floating Card */}
-
-          <div className="absolute -bottom-10 -left-8 rounded-3xl bg-white p-6 shadow-2xl">
-
-            <div className="space-y-5">
-
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="text-green-600" />
-                <span className="font-semibold">
-                  Verified Pandits
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <CalendarDays className="text-orange-600" />
-                <span className="font-semibold">
-                  Instant Booking
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Star className="text-yellow-500" />
-                <span className="font-semibold">
-                  Trusted by Devotees
-                </span>
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
       </div>
-
     </section>
   );
 }

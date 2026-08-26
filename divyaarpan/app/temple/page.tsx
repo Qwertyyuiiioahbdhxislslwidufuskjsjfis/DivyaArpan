@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import TempleGallery from "../components/TempleGallery";
 import TempleMap from "../components/TempleMap";
 import TemplePoojas from "../components/TemplePoojas";
 import { temples } from "../data/temples";
 
-export default function TempleDetails() {
+function TempleDetailsContent() {
 
   const searchParams = useSearchParams();
 
@@ -28,9 +30,12 @@ export default function TempleDetails() {
       <section className="max-w-6xl mx-auto py-16 px-6">
 
 
-        <img
+        <Image
           src={temple.image}
           alt={temple.name}
+          width={1200}
+          height={600}
+          unoptimized
           className="w-full h-96 object-cover rounded-xl shadow-lg"
         />
 
@@ -142,5 +147,23 @@ export default function TempleDetails() {
 
     </main>
 
+  );
+}
+
+export default function TempleDetails() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-orange-50 flex items-center justify-center px-6">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-gray-700">
+              Loading temple details...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <TempleDetailsContent />
+    </Suspense>
   );
 }

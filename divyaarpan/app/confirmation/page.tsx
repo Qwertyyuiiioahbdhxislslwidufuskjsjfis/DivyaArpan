@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 
-export default function Confirmation() {
+function ConfirmationContent() {
 
 
   const searchParams = useSearchParams();
@@ -199,4 +200,22 @@ export default function Confirmation() {
 
   );
 
+}
+
+export default function Confirmation() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-orange-50 flex items-center justify-center px-6">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-orange-700">
+              Loading confirmation...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <ConfirmationContent />
+    </Suspense>
+  );
 }
