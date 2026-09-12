@@ -1,0 +1,346 @@
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
+import {
+  clearPanditSession,
+  panditApiFetch,
+} from "@/lib/api";
+
+const GOLD = "#B88924";
+const DARK_GOLD = "#8D6718";
+const CREAM = "#FFFDF8";
+const BORDER = "#E8D9B8";
+const TEXT = "#2D2418";
+const MUTED = "#756B5C";
+const GREEN = "#1D7A46";
+
+export default function VerificationPendingScreen() {
+  const [name, setName] = useState("Pandit Ji");
+  const [panditCode, setPanditCode] = useState("");
+  const [checking, setChecking] = useState(true);
+  const [message, setMessage] = useState("");
+
+  async function checkStatus() {
+    setChecking(true);
+    setMessage("");
+
+    try {
+      const response = await panditApiFetch(
+        "/api/pandit/me"
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            "Unable to check verification status."
+        );
+      }
+
+      if (result.pandit?.name) {
+        setName(result.pandit.name);
+      }
+
+      if (result.pandit?.panditCode) {
+        setPanditCode(result.pandit.panditCode);
+      }
+
+      if (
+        result.pandit?.verificationStatus === "VERIFIED" &&
+        result.pandit?.isActive === true
+      ) {
+        router.replace("/dashboard");
+        return;
+      }
+
+      setMessage(
+        "Your application is still under verification."
+      );
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message === "AUTH_REQUIRED" ||
+          error.message === "SESSION_EXPIRED")
+      ) {
+        router.replace("/");
+        return;
+      }
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to check verification status."
+      );
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  useEffect(() => {
+    void checkStatus();
+  }, []);
+
+  async function signOut() {
+    await clearPanditSession();
+    router.replace("/");
+  }
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.card}>
+        <View style={styles.logoCircle}>
+          <Text style={styles.logo}>ॐ</Text>
+        </View>
+
+        <Text style={styles.brand}>DivyaArpan</Text>
+        <Text style={styles.portal}>PANDIT PARTNER</Text>
+
+        <View style={styles.statusIcon}>
+          <Text style={styles.statusIconText}>⌛</Text>
+        </View>
+
+        <Text style={styles.title}>
+          Verification in Progress
+        </Text>
+
+        <Text style={styles.greeting}>
+          Namaste, {name}
+        </Text>
+
+        <Text style={styles.description}>
+          Your Pandit Partner application has been
+          received and is currently being reviewed by
+          the DivyaArpan Admin team.
+        </Text>
+
+        {panditCode ? (
+          <View style={styles.referenceBox}>
+            <Text style={styles.referenceLabel}>
+              APPLICATION REFERENCE
+            </Text>
+            <Text style={styles.referenceValue}>
+              {panditCode}
+            </Text>
+          </View>
+        ) : null}
+
+        <View style={styles.infoBox}>
+          <Text style={styles.infoTitle}>
+            What happens next?
+          </Text>
+
+          <Text style={styles.infoText}>
+            Your profile and verification documents will
+            be reviewed. Once approved, your Pandit
+            Dashboard and booking features will become
+            available automatically.
+          </Text>
+        </View>
+
+        {message ? (
+          <Text style={styles.message}>{message}</Text>
+        ) : null}
+
+        <Pressable
+          disabled={checking}
+          onPress={checkStatus}
+          style={styles.primaryButton}
+        >
+          {checking ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.primaryButtonText}>
+              Check Verification Status
+            </Text>
+          )}
+        </Pressable>
+
+        <Pressable
+          onPress={signOut}
+          style={styles.secondaryButton}
+        >
+          <Text style={styles.secondaryButtonText}>
+            Sign Out
+          </Text>
+        </Pressable>
+
+        <Text style={styles.secureText}>
+          🔒 Your verification documents remain private
+          and are available only to authorized review.
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: CREAM,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 560,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 24,
+    alignItems: "center",
+  },
+  logoCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#FFF5D8",
+    borderWidth: 1,
+    borderColor: BORDER,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logo: {
+    color: DARK_GOLD,
+    fontSize: 29,
+    fontWeight: "800",
+  },
+  brand: {
+    marginTop: 10,
+    color: DARK_GOLD,
+    fontSize: 21,
+    fontWeight: "900",
+  },
+  portal: {
+    marginTop: 2,
+    color: MUTED,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 2,
+  },
+  statusIcon: {
+    marginTop: 25,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "#FFF8E6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusIconText: {
+    fontSize: 29,
+  },
+  title: {
+    marginTop: 16,
+    color: TEXT,
+    fontSize: 25,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  greeting: {
+    marginTop: 8,
+    color: DARK_GOLD,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  description: {
+    marginTop: 12,
+    color: MUTED,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+  },
+  referenceBox: {
+    width: "100%",
+    marginTop: 20,
+    backgroundColor: "#F8F3E6",
+    borderRadius: 14,
+    padding: 14,
+    alignItems: "center",
+  },
+  referenceLabel: {
+    color: MUTED,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+  },
+  referenceValue: {
+    marginTop: 5,
+    color: DARK_GOLD,
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  infoBox: {
+    width: "100%",
+    marginTop: 18,
+    padding: 15,
+    borderRadius: 14,
+    backgroundColor: "#FFF8E6",
+    borderWidth: 1,
+    borderColor: "#E9D6A4",
+  },
+  infoTitle: {
+    color: DARK_GOLD,
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  infoText: {
+    marginTop: 6,
+    color: MUTED,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  message: {
+    marginTop: 14,
+    color: GREEN,
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  primaryButton: {
+    width: "100%",
+    minHeight: 52,
+    marginTop: 20,
+    borderRadius: 13,
+    backgroundColor: GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  secondaryButton: {
+    width: "100%",
+    minHeight: 50,
+    marginTop: 10,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryButtonText: {
+    color: DARK_GOLD,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  secureText: {
+    marginTop: 18,
+    color: MUTED,
+    fontSize: 11,
+    lineHeight: 17,
+    textAlign: "center",
+  },
+});

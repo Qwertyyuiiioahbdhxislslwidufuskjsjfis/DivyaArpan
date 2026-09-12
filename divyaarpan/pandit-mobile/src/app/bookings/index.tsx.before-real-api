@@ -1,0 +1,741 @@
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
+import PanditShell from "@/components/pandit/PanditShell";
+import { Colors, Radius, Spacing } from "@/constants/theme";
+
+type Filter = "All" | "Upcoming" | "Today" | "Completed" | "Cancelled";
+
+export default function BookingsScreen() {
+  const [filter, setFilter] = useState<Filter>("All");
+
+  return (
+    <PanditShell
+      activeTab="bookings"
+      notificationCount={2}
+      onTabPress={(tab) => {
+        if (tab === "home") router.replace("/dashboard");
+        if (tab === "requests") router.replace("/requests");
+        if (tab === "bookings") router.replace("/bookings");
+        if (tab === "notifications") router.replace("/notifications");
+        if (tab === "profile") router.replace("/profile");
+      }}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>My Bookings</Text>
+            <Text style={styles.subtitle}>
+              Manage your confirmed and completed bookings
+            </Text>
+          </View>
+
+          <View style={styles.totalBadge}>
+            <Text style={styles.totalNumber}>1</Text>
+            <Text style={styles.totalLabel}>Active</Text>
+          </View>
+        </View>
+
+        {/* Filters */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filters}
+        >
+          {(
+            [
+              "All",
+              "Upcoming",
+              "Today",
+              "Completed",
+              "Cancelled",
+            ] as Filter[]
+          ).map((item) => (
+            <Pressable
+              key={item}
+              onPress={() => setFilter(item)}
+              style={[
+                styles.filterChip,
+                filter === item && styles.filterChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  filter === item && styles.filterTextActive,
+                ]}
+              >
+                {item}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* Today's section */}
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionTitle}>Today</Text>
+            <Text style={styles.sectionSubtitle}>
+              Your scheduled service for today
+            </Text>
+          </View>
+
+          <View style={styles.todayBadge}>
+            <View style={styles.todayDot} />
+            <Text style={styles.todayText}>1 BOOKING</Text>
+          </View>
+        </View>
+
+        {/* Booking Card */}
+        <Pressable
+          onPress={() => router.push("/bookings/DA-BKG-001")}
+          style={({ pressed }) => [
+            styles.bookingCard,
+            pressed && styles.pressed,
+          ]}
+        >
+          {/* Card header */}
+          <View style={styles.cardHeader}>
+            <View style={styles.serviceIcon}>
+              <Ionicons
+                name="sparkles-outline"
+                size={24}
+                color={Colors.primary}
+              />
+            </View>
+
+            <View style={styles.serviceInfo}>
+              <Text style={styles.serviceName}>
+                Satyanarayan Pooja
+              </Text>
+
+              <Text style={styles.bookingId}>
+                Booking ID · DA-BKG-001
+              </Text>
+            </View>
+
+            <View style={styles.confirmedBadge}>
+              <View style={styles.confirmedDot} />
+              <Text style={styles.confirmedText}>Confirmed</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Date / Time */}
+          <View style={styles.scheduleRow}>
+            <View style={styles.scheduleItem}>
+              <View style={styles.scheduleIcon}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={Colors.primary}
+                />
+              </View>
+
+              <View>
+                <Text style={styles.label}>Date</Text>
+                <Text style={styles.value}>Today</Text>
+              </View>
+            </View>
+
+            <View style={styles.scheduleItem}>
+              <View style={styles.scheduleIcon}>
+                <Ionicons
+                  name="time-outline"
+                  size={18}
+                  color={Colors.primary}
+                />
+              </View>
+
+              <View>
+                <Text style={styles.label}>Time</Text>
+                <Text style={styles.value}>6:00 PM</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Location */}
+          <View style={styles.locationBox}>
+            <View style={styles.locationIcon}>
+              <Ionicons
+                name="location-outline"
+                size={18}
+                color={Colors.primary}
+              />
+            </View>
+
+            <View style={styles.locationContent}>
+              <Text style={styles.label}>Service Location</Text>
+              <Text style={styles.locationValue}>
+                Andheri West, Mumbai
+              </Text>
+              <Text style={styles.locationSubtext}>
+                At Customer Location
+              </Text>
+            </View>
+
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Colors.textMuted}
+            />
+          </View>
+
+          {/* Customer */}
+          <View style={styles.customerRow}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>R</Text>
+            </View>
+
+            <View style={styles.customerInfo}>
+              <Text style={styles.customerName}>
+                Rahul Sharma
+              </Text>
+              <Text style={styles.customerLocation}>
+                Mumbai, Maharashtra
+              </Text>
+            </View>
+          </View>
+
+          {/* Requirements */}
+          <View style={styles.requirements}>
+            <View style={styles.requirement}>
+              <Ionicons
+                name="cube-outline"
+                size={15}
+                color={Colors.success}
+              />
+              <Text style={styles.requirementText}>
+                Samagri Required
+              </Text>
+            </View>
+
+            <View style={styles.requirement}>
+              <Ionicons
+                name="language-outline"
+                size={15}
+                color={Colors.textSecondary}
+              />
+              <Text style={styles.requirementText}>
+                Hindi
+              </Text>
+            </View>
+          </View>
+
+          {/* Amount */}
+          <View style={styles.amountRow}>
+            <View>
+              <Text style={styles.amountLabel}>
+                DivyaArpan Booking Amount
+              </Text>
+              <Text style={styles.amount}>₹2,100</Text>
+            </View>
+
+            <View style={styles.detailsButton}>
+              <Text style={styles.detailsText}>View Details</Text>
+              <Ionicons
+                name="arrow-forward"
+                size={15}
+                color={Colors.primary}
+              />
+            </View>
+          </View>
+        </Pressable>
+
+        {/* Upcoming */}
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionTitle}>Upcoming</Text>
+            <Text style={styles.sectionSubtitle}>
+              Future confirmed bookings
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.emptyCard}>
+          <View style={styles.emptyIcon}>
+            <Ionicons
+              name="calendar-outline"
+              size={24}
+              color={Colors.primary}
+            />
+          </View>
+
+          <Text style={styles.emptyTitle}>
+            No upcoming bookings
+          </Text>
+
+          <Text style={styles.emptyText}>
+            New confirmed bookings will appear here.
+          </Text>
+        </View>
+
+        {/* Booking policy */}
+        <View style={styles.policyCard}>
+          <View style={styles.policyIcon}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={20}
+              color={Colors.primary}
+            />
+          </View>
+
+          <View style={styles.policyContent}>
+            <Text style={styles.policyTitle}>
+              DivyaArpan Booking Policy
+            </Text>
+
+            <Text style={styles.policyText}>
+              Please arrive on time and complete the booked
+              pooja according to the customer's request.
+              Booking amount is controlled by DivyaArpan.
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ height: Spacing.xxl }} />
+      </ScrollView>
+    </PanditShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+  },
+
+  pressed: {
+    opacity: 0.75,
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  headerText: {
+    flex: 1,
+  },
+
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  subtitle: {
+    marginTop: 5,
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textSecondary,
+  },
+
+  totalBadge: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  totalNumber: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  totalLabel: {
+    marginTop: 1,
+    fontSize: 8,
+    fontWeight: "700",
+    color: Colors.primary,
+  },
+
+  filters: {
+    gap: 8,
+    paddingVertical: Spacing.lg,
+  },
+
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  filterChipActive: {
+    backgroundColor: Colors.primaryDark,
+    borderColor: Colors.primaryDark,
+  },
+
+  filterText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+  },
+
+  filterTextActive: {
+    color: Colors.white,
+  },
+
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  sectionSubtitle: {
+    marginTop: 2,
+    fontSize: 10,
+    color: Colors.textSecondary,
+  },
+
+  todayBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.successSoft,
+  },
+
+  todayDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 5,
+    backgroundColor: Colors.success,
+  },
+
+  todayText: {
+    fontSize: 8,
+    fontWeight: "800",
+    color: Colors.success,
+  },
+
+  bookingCard: {
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  serviceIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  serviceInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  serviceName: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  bookingId: {
+    marginTop: 4,
+    fontSize: 10,
+    color: Colors.textMuted,
+  },
+
+  confirmedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.successSoft,
+  },
+
+  confirmedDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 5,
+    backgroundColor: Colors.success,
+  },
+
+  confirmedText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: Colors.success,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.lg,
+  },
+
+  scheduleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  scheduleItem: {
+    width: "48%",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  scheduleIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  label: {
+    fontSize: 9,
+    color: Colors.textMuted,
+  },
+
+  value: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+
+  locationBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceSoft,
+  },
+
+  locationIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  locationContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  locationValue: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  locationSubtext: {
+    marginTop: 2,
+    fontSize: 10,
+    color: Colors.textSecondary,
+  },
+
+  customerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.lg,
+  },
+
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primaryDark,
+  },
+
+  avatarText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: Colors.white,
+  },
+
+  customerInfo: {
+    marginLeft: Spacing.md,
+  },
+
+  customerName: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  customerLocation: {
+    marginTop: 2,
+    fontSize: 10,
+    color: Colors.textSecondary,
+  },
+
+  requirements: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+
+  requirement: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  requirementText: {
+    marginLeft: 5,
+    fontSize: 10,
+    fontWeight: "600",
+    color: Colors.textSecondary,
+  },
+
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+
+  amountLabel: {
+    fontSize: 9,
+    color: Colors.textMuted,
+  },
+
+  amount: {
+    marginTop: 3,
+    fontSize: 21,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  detailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primarySoft,
+  },
+
+  detailsText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.primary,
+  },
+
+  emptyCard: {
+    alignItems: "center",
+    padding: Spacing.xxl,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  emptyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  emptyTitle: {
+    marginTop: Spacing.md,
+    fontSize: 14,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  emptyText: {
+    marginTop: 4,
+    fontSize: 11,
+    textAlign: "center",
+    color: Colors.textSecondary,
+  },
+
+  policyCard: {
+    flexDirection: "row",
+    marginTop: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.primarySoft,
+  },
+
+  policyIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.surface,
+  },
+
+  policyContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  policyTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  policyText: {
+    marginTop: 4,
+    fontSize: 10,
+    lineHeight: 16,
+    color: Colors.primaryDark,
+  },
+});

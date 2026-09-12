@@ -1,0 +1,919 @@
+import React from "react";
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
+import PanditShell from "@/components/pandit/PanditShell";
+import {
+  Colors,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+
+type Earning = {
+  id: string;
+  pooja: string;
+  date: string;
+  location: string;
+  amount: number;
+  status: "Paid" | "Pending";
+};
+
+const earnings: Earning[] = [
+  {
+    id: "DA-BKG-001",
+    pooja: "Satyanarayan Pooja",
+    date: "6 Sep 2026",
+    location: "Andheri West, Mumbai",
+    amount: 2100,
+    status: "Paid",
+  },
+  {
+    id: "DA-BKG-002",
+    pooja: "Griha Pravesh",
+    date: "4 Sep 2026",
+    location: "Bandra West, Mumbai",
+    amount: 3500,
+    status: "Paid",
+  },
+  {
+    id: "DA-BKG-003",
+    pooja: "Ganesh Pooja",
+    date: "2 Sep 2026",
+    location: "Borivali West, Mumbai",
+    amount: 1800,
+    status: "Pending",
+  },
+];
+
+function StatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.statCard}>
+      <View style={styles.statIcon}>
+        <Ionicons
+          name={icon}
+          size={19}
+          color={Colors.primary}
+        />
+      </View>
+
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+export default function EarningsScreen() {
+  const totalEarnings = earnings.reduce(
+    (total, item) => total + item.amount,
+    0
+  );
+
+  const pendingAmount = earnings
+    .filter((item) => item.status === "Pending")
+    .reduce((total, item) => total + item.amount, 0);
+
+  const completedCount = earnings.filter(
+    (item) => item.status === "Paid"
+  ).length;
+
+  return (
+    <PanditShell
+      activeTab="home"
+      notificationCount={2}
+      onTabPress={(tab) => {
+        if (tab === "home") {
+          router.replace("/dashboard");
+        }
+
+        if (tab === "requests") {
+          router.replace("/requests");
+        }
+
+        if (tab === "bookings") {
+          router.replace("/bookings");
+        }
+
+        if (tab === "notifications") {
+          router.replace("/notifications");
+        }
+
+        if (tab === "profile") {
+          router.replace("/profile");
+        }
+      }}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.content}
+        >
+          {/* Header */}
+
+          <View style={styles.header}>
+            <Pressable
+              onPress={() => router.replace("/dashboard")}
+              style={({ pressed }) => [
+                styles.backButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={21}
+                color={Colors.text}
+              />
+            </Pressable>
+
+            <View style={styles.headerText}>
+              <Text style={styles.title}>
+                Earnings & Payments
+              </Text>
+
+              <Text style={styles.subtitle}>
+                Track your DivyaArpan earnings and settlements
+              </Text>
+            </View>
+          </View>
+
+          {/* Main Earnings Card */}
+
+          <View style={styles.earningsCard}>
+            <View style={styles.earningsTop}>
+              <View>
+                <Text style={styles.earningsLabel}>
+                  Total Earnings
+                </Text>
+
+                <Text style={styles.earningsAmount}>
+                  ₹{totalEarnings.toLocaleString("en-IN")}
+                </Text>
+
+                <Text style={styles.earningsPeriod}>
+                  September 2026
+                </Text>
+              </View>
+
+              <View style={styles.walletIcon}>
+                <Ionicons
+                  name="wallet-outline"
+                  size={27}
+                  color={Colors.primaryDark}
+                />
+              </View>
+            </View>
+
+            <View style={styles.earningsDivider} />
+
+            <View style={styles.earningsFooter}>
+              <View style={styles.earningFooterItem}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={17}
+                  color={Colors.success}
+                />
+
+                <Text style={styles.earningFooterText}>
+                  {completedCount} settled bookings
+                </Text>
+              </View>
+
+              <View style={styles.earningFooterItem}>
+                <Ionicons
+                  name="time-outline"
+                  size={17}
+                  color={Colors.warning}
+                />
+
+                <Text style={styles.earningFooterText}>
+                  ₹{pendingAmount.toLocaleString("en-IN")} pending
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Statistics */}
+
+          <Text style={styles.sectionTitle}>
+            Earnings Overview
+          </Text>
+
+          <View style={styles.statsGrid}>
+            <StatCard
+              icon="calendar-outline"
+              label="This Month"
+              value={`₹${totalEarnings.toLocaleString("en-IN")}`}
+            />
+
+            <StatCard
+              icon="trending-up-outline"
+              label="This Week"
+              value="₹5,600"
+            />
+
+            <StatCard
+              icon="checkmark-circle-outline"
+              label="Completed"
+              value={`${completedCount}`}
+            />
+
+            <StatCard
+              icon="time-outline"
+              label="Pending"
+              value={`₹${pendingAmount.toLocaleString("en-IN")}`}
+            />
+          </View>
+
+          {/* Settlement */}
+
+          <Text style={styles.sectionTitle}>
+            Settlement
+          </Text>
+
+          <View style={styles.settlementCard}>
+            <View style={styles.settlementIcon}>
+              <Ionicons
+                name="card-outline"
+                size={22}
+                color={Colors.primary}
+              />
+            </View>
+
+            <View style={styles.settlementContent}>
+              <Text style={styles.settlementTitle}>
+                Next Settlement
+              </Text>
+
+              <Text style={styles.settlementAmount}>
+                ₹{pendingAmount.toLocaleString("en-IN")}
+              </Text>
+
+              <Text style={styles.settlementText}>
+                Pending settlement amount
+              </Text>
+            </View>
+
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingBadgeText}>
+                Pending
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.infoBox}>
+            <Ionicons
+              name="information-circle-outline"
+              size={18}
+              color={Colors.textMuted}
+            />
+
+            <Text style={styles.infoText}>
+              Settlement details will be synchronized with
+              DivyaArpan once the payments API is connected.
+            </Text>
+          </View>
+
+          {/* Earnings History */}
+
+          <Text style={styles.sectionTitle}>
+            Earnings History
+          </Text>
+
+          <View style={styles.historyCard}>
+            {earnings.map((earning, index) => (
+              <View key={earning.id}>
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/bookings/[id]",
+                      params: { id: earning.id },
+                    })
+                  }
+                  style={({ pressed }) => [
+                    styles.earningRow,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View style={styles.historyIcon}>
+                    <Ionicons
+                      name="sparkles-outline"
+                      size={19}
+                      color={Colors.primary}
+                    />
+                  </View>
+
+                  <View style={styles.historyContent}>
+                    <Text style={styles.historyPooja}>
+                      {earning.pooja}
+                    </Text>
+
+                    <Text style={styles.historyId}>
+                      {earning.id}
+                    </Text>
+
+                    <Text style={styles.historyDetails}>
+                      {earning.date} · {earning.location}
+                    </Text>
+                  </View>
+
+                  <View style={styles.historyRight}>
+                    <Text style={styles.historyAmount}>
+                      ₹{earning.amount.toLocaleString("en-IN")}
+                    </Text>
+
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        earning.status === "Paid"
+                          ? styles.paidBadge
+                          : styles.pendingHistoryBadge,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.statusDot,
+                          earning.status === "Paid"
+                            ? styles.paidDot
+                            : styles.pendingDot,
+                        ]}
+                      />
+
+                      <Text
+                        style={[
+                          styles.statusText,
+                          earning.status === "Paid"
+                            ? styles.paidText
+                            : styles.pendingHistoryText,
+                        ]}
+                      >
+                        {earning.status}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+
+                {index < earnings.length - 1 && (
+                  <View style={styles.divider} />
+                )}
+              </View>
+            ))}
+          </View>
+
+          {/* Payment Information */}
+
+          <Text style={styles.sectionTitle}>
+            Payment Information
+          </Text>
+
+          <View style={styles.paymentCard}>
+            <View style={styles.paymentRow}>
+              <View style={styles.paymentIcon}>
+                <Ionicons
+                  name="business-outline"
+                  size={19}
+                  color={Colors.primary}
+                />
+              </View>
+
+              <View style={styles.paymentContent}>
+                <Text style={styles.paymentLabel}>
+                  Settlement Account
+                </Text>
+
+                <Text style={styles.paymentValue}>
+                  Bank account ending •••• 4521
+                </Text>
+              </View>
+
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={Colors.success}
+              />
+            </View>
+
+            <View style={styles.divider} />
+
+            <Pressable
+              onPress={() =>
+                alert(
+                  "Bank account management will be connected later."
+                )
+              }
+              style={styles.paymentAction}
+            >
+              <Ionicons
+                name="settings-outline"
+                size={18}
+                color={Colors.primary}
+              />
+
+              <Text style={styles.paymentActionText}>
+                Manage Payment Details
+              </Text>
+
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={Colors.textMuted}
+              />
+            </Pressable>
+          </View>
+
+          {/* Policy */}
+
+          <View style={styles.policyCard}>
+            <View style={styles.policyIcon}>
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={21}
+                color={Colors.primaryDark}
+              />
+            </View>
+
+            <View style={styles.policyContent}>
+              <Text style={styles.policyTitle}>
+                DivyaArpan Payment Policy
+              </Text>
+
+              <Text style={styles.policyText}>
+                Customer pricing is controlled by DivyaArpan.
+                Your earnings are calculated from the confirmed
+                booking amount and settlement rules.
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.bottomNote}>
+            Earnings shown here are sample data for app
+            development. Live earnings will appear after API
+            integration.
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
+    </PanditShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: 130,
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  headerText: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  title: {
+    fontSize: 25,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  subtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    lineHeight: 17,
+    color: Colors.textSecondary,
+  },
+
+  earningsCard: {
+    padding: Spacing.xl,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.primarySoft,
+    borderWidth: 1,
+    borderColor: "#f5d9a5",
+  },
+
+  earningsTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  earningsLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.primaryDark,
+  },
+
+  earningsAmount: {
+    marginTop: 7,
+    fontSize: 32,
+    fontWeight: "900",
+    color: Colors.primaryDark,
+  },
+
+  earningsPeriod: {
+    marginTop: 2,
+    fontSize: 11,
+    color: Colors.textSecondary,
+  },
+
+  walletIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.white,
+  },
+
+  earningsDivider: {
+    height: 1,
+    marginVertical: Spacing.lg,
+    backgroundColor: "#ead7b3",
+  },
+
+  earningsFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+
+  earningFooterItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+
+  earningFooterText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+  },
+
+  sectionTitle: {
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+    fontSize: 18,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+
+  statCard: {
+    width: "48%",
+    minHeight: 125,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  statIcon: {
+    width: 39,
+    height: 39,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  statValue: {
+    marginTop: 13,
+    fontSize: 18,
+    fontWeight: "900",
+    color: Colors.text,
+  },
+
+  statLabel: {
+    marginTop: 3,
+    fontSize: 10,
+    color: Colors.textSecondary,
+  },
+
+  settlementCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  settlementIcon: {
+    width: 45,
+    height: 45,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  settlementContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  settlementTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.textSecondary,
+  },
+
+  settlementAmount: {
+    marginTop: 3,
+    fontSize: 20,
+    fontWeight: "900",
+    color: Colors.text,
+  },
+
+  settlementText: {
+    marginTop: 2,
+    fontSize: 10,
+    color: Colors.textMuted,
+  },
+
+  pendingBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.warningSoft,
+  },
+
+  pendingBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.warning,
+  },
+
+  infoBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceSoft,
+  },
+
+  infoText: {
+    flex: 1,
+    marginLeft: 7,
+    fontSize: 10,
+    lineHeight: 15,
+    color: Colors.textMuted,
+  },
+
+  historyCard: {
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  earningRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.lg,
+  },
+
+  historyIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  historyContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  historyPooja: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  historyId: {
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: "600",
+    color: Colors.textMuted,
+  },
+
+  historyDetails: {
+    marginTop: 4,
+    fontSize: 10,
+    lineHeight: 15,
+    color: Colors.textSecondary,
+  },
+
+  historyRight: {
+    alignItems: "flex-end",
+    marginLeft: 8,
+  },
+
+  historyAmount: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: Colors.primaryDark,
+  },
+
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+  },
+
+  paidBadge: {
+    backgroundColor: Colors.successSoft,
+  },
+
+  pendingHistoryBadge: {
+    backgroundColor: Colors.warningSoft,
+  },
+
+  statusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+
+  paidDot: {
+    backgroundColor: Colors.success,
+  },
+
+  pendingDot: {
+    backgroundColor: Colors.warning,
+  },
+
+  statusText: {
+    fontSize: 9,
+    fontWeight: "800",
+  },
+
+  paidText: {
+    color: Colors.success,
+  },
+
+  pendingHistoryText: {
+    color: Colors.warning,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+
+  paymentCard: {
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  paymentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.lg,
+  },
+
+  paymentIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  paymentContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  paymentLabel: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    fontWeight: "600",
+  },
+
+  paymentValue: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  paymentAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.lg,
+    gap: 8,
+  },
+
+  paymentActionText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  policyCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginTop: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  policyIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  policyContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  policyTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  policyText: {
+    marginTop: 5,
+    fontSize: 10,
+    lineHeight: 16,
+    color: Colors.textSecondary,
+  },
+
+  bottomNote: {
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    fontSize: 10,
+    lineHeight: 15,
+    textAlign: "center",
+    color: Colors.textMuted,
+  },
+
+  pressed: {
+    opacity: 0.7,
+  },
+});

@@ -1,0 +1,60 @@
+import * as FileSystem from "expo-file-system/legacy";
+
+import { API_BASE_URL } from "./api";
+
+type NativeDocumentUploadOptions = {
+  sessionToken: string;
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  documentType: string;
+  documentNumber: string;
+};
+
+export async function uploadPanditDocumentNative({
+  sessionToken,
+  uri,
+  fileName,
+  mimeType,
+  documentType,
+  documentNumber,
+}: NativeDocumentUploadOptions) {
+  const response = await FileSystem.uploadAsync(
+    `${API_BASE_URL}/api/pandit/documents/upload`,
+    uri,
+    {
+      httpMethod: "POST",
+      uploadType:
+        FileSystem.FileSystemUploadType.MULTIPART,
+      fieldName: "file",
+      mimeType,
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+      },
+      parameters: {
+        documentType,
+        documentNumber,
+      },
+    }
+  );
+
+  let result: any = {};
+
+  try {
+    result = response.body
+      ? JSON.parse(response.body)
+      : {};
+  } catch {
+    result = {};
+  }
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(
+      result.message ||
+        result.error ||
+        `Document upload failed with status ${response.status}.`
+    );
+  }
+
+  return result;
+}

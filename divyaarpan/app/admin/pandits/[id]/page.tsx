@@ -95,7 +95,7 @@ function documentLabel(type: string) {
     REFERENCE_PROOF:
       "Temple / Guru / Organisation Reference",
     PARTNER_AGREEMENT:
-      "DivyaArpan Pandit Partner Agreement",
+      "DivyaDarpan Pandit Partner Agreement",
   };
 
   return (
@@ -346,7 +346,7 @@ export default function PanditDetailsPage() {
     }
 
     const confirmed = window.confirm(
-      `Approve ${pandit.name} as a verified DivyaArpan Pandit?\n\nPlease confirm that you have reviewed the Pandit's profile and required documents.`
+      `Approve ${pandit.name} as a verified DivyaDarpan Pandit?\n\nPlease confirm that you have reviewed the Pandit's profile and required documents.`
     );
 
     if (!confirmed) {
@@ -397,7 +397,7 @@ export default function PanditDetailsPage() {
       );
 
       setApprovalMessage(
-        "Pandit approved successfully. The Pandit is now verified on DivyaArpan."
+        "Pandit approved successfully. The Pandit is now verified on DivyaDarpan."
       );
     } catch (error) {
       console.error(error);
@@ -1017,9 +1017,7 @@ export default function PanditDetailsPage() {
 
                       <div className="flex flex-wrap gap-3">
                         <a
-                          href={
-                            document.documentUrl
-                          }
+                          href={`/api/pandits/${pandit.id}/documents/${document.id}/view`}
                           target="_blank"
                           rel="noreferrer"
                           className="rounded-xl border border-orange-200 px-5 py-2.5 font-semibold text-orange-700 transition hover:bg-orange-50"
@@ -1109,7 +1107,7 @@ export default function PanditDetailsPage() {
                     completed Admin
                     verification and is
                     now a verified
-                    DivyaArpan Pandit.
+                    DivyaDarpan Pandit.
                   </p>
 
                   <p className="mt-3 text-sm font-bold text-green-700">

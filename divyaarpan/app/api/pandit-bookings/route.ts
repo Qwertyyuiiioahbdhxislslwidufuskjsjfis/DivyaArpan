@@ -53,6 +53,13 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      if (user?.role === "PANDIT" && booking.panditId !== user.panditId) {
+        return NextResponse.json(
+          { success: false, error: "Booking not found." },
+          { status: 404 }
+        );
+      }
+
       return NextResponse.json({
         success: true,
         booking,
@@ -106,21 +113,39 @@ export async function POST(request: Request) {
       date,
       time,
       sankalp,
+      state,
+      pincode,
+      bookingType,
+      urgency,
+      samagriRequired,
       devoteeName,
       mobile,
       email,
     } = body;
 
-    if (
-      !service ||
-      !city ||
-      !address ||
-      !language ||
-      !date ||
-      !time ||
-      !devoteeName ||
-      !mobile
-    ) {
+    const cleanService = typeof service === "string" ? service.trim() : "";
+    const cleanCity = typeof city === "string" ? city.trim() : "";
+    const cleanAddress = typeof address === "string" ? address.trim() : "";
+    const cleanLanguage = typeof language === "string" ? language.trim() : "";
+    const cleanDate = typeof date === "string" ? date.trim() : "";
+    const cleanTime = typeof time === "string" ? time.trim() : "";
+    const cleanName = typeof devoteeName === "string" ? devoteeName.trim() : "";
+    const cleanMobile = typeof mobile === "string" ? mobile.trim() : "";
+    const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    const cleanState = typeof state === "string" ? state.trim() : "";
+    const cleanPincode = typeof pincode === "string" ? pincode.trim() : "";
+    const normalizedBookingType = bookingType === "IMMEDIATE" ? "IMMEDIATE" : "SCHEDULED";
+    const normalizedUrgency = urgency === "ASAP" || urgency === "WITHIN_1_HOUR" || urgency === "WITHIN_2_HOURS" || urgency === "WITHIN_4_HOURS" ? urgency : "SCHEDULED";
+
+    if (bookingType !== undefined && bookingType !== "IMMEDIATE" && bookingType !== "SCHEDULED") {
+      return NextResponse.json({ success: false, error: "Booking type must be IMMEDIATE or SCHEDULED." }, { status: 400 });
+    }
+
+    if (urgency !== undefined && !["ASAP", "WITHIN_1_HOUR", "WITHIN_2_HOURS", "WITHIN_4_HOURS", "SCHEDULED"].includes(urgency)) {
+      return NextResponse.json({ success: false, error: "Invalid booking urgency." }, { status: 400 });
+    }
+
+    if (!cleanService || !cleanCity || !cleanAddress || !cleanLanguage || !cleanName || !/^(?:\+91)?[6-9]\d{9}$/.test(cleanMobile) || (cleanEmail && !/^\S+@\S+\.\S+$/.test(cleanEmail)) || (cleanPincode && !/^\d{6}$/.test(cleanPincode))) {
       return NextResponse.json(
         {
           success: false,
@@ -129,6 +154,13 @@ export async function POST(request: Request) {
         {
           status: 400,
         }
+      );
+    }
+
+    if (normalizedBookingType === "SCHEDULED" && (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate) || cleanDate < new Date().toISOString().slice(0, 10) || !cleanTime)) {
+      return NextResponse.json(
+        { success: false, error: "Please provide a valid future date and time." },
+        { status: 400 }
       );
     }
 
@@ -150,19 +182,24 @@ export async function POST(request: Request) {
   data: {
     bookingId,
 
-    service: service.trim(),
-    city: city.trim(),
-    address: address.trim(),
-    language: language.trim(),
+    service: cleanService,
+    city: cleanCity,
+    address: cleanAddress,
+    language: cleanLanguage,
 
-    date,
-    time,
+    date: normalizedBookingType === "IMMEDIATE" ? cleanDate || new Date().toISOString().slice(0, 10) : cleanDate,
+    time: normalizedBookingType === "IMMEDIATE" ? cleanTime || "ASAP" : cleanTime,
 
     sankalp: sankalp?.trim() || null,
+    samagriRequired: samagriRequired === true,
+    state: cleanState || null,
+    pincode: cleanPincode || null,
+    bookingType: normalizedBookingType,
+    urgency: normalizedBookingType === "IMMEDIATE" ? normalizedUrgency : "SCHEDULED",
 
-    devoteeName: devoteeName.trim(),
-    mobile: mobile.trim(),
-    email: email?.trim() || null,
+    devoteeName: cleanName,
+    mobile: cleanMobile,
+    email: cleanEmail || null,
 
     devoteeId: user?.role === "DEVOTEE" ? user.devoteeId : null,
 
@@ -189,7 +226,9 @@ await runMatchingEngine(booking.id);
         status: 201,
       }
     );
-    if (!user) setGuestBookingCookie(response, request, booking.bookingId);
+    if (!user || user.role !== "DEVOTEE") {
+        setGuestBookingCookie(response, request, booking.bookingId);
+      }
     return response;
   } catch (error) {
     console.error("CREATE PANDIT BOOKING ERROR:", error);

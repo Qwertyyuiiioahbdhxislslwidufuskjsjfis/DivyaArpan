@@ -153,7 +153,7 @@ export default async function PoojaDetail({
         <div className="mt-12 rounded-3xl bg-orange-50 px-6 py-10 text-center">
           <h2 className="text-3xl font-bold text-slate-900">Ready to make your booking?</h2>
           <p className="mx-auto mt-3 max-w-2xl leading-7 text-slate-600">
-            Continue with the existing DivyaArpan booking form to add devotee details,
+            Continue with the existing DivyaDarpan booking form to add devotee details,
             date, time and your Sankalp.
           </p>
           <Link

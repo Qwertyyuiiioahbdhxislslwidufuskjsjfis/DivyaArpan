@@ -72,7 +72,7 @@ export default async function AdminPanditsPage() {
 
               <p className="mt-3 max-w-2xl text-orange-100">
                 Add, verify and manage Pandits available
-                through the DivyaArpan marketplace.
+                through the DivyaDarpan marketplace.
               </p>
             </div>
 
@@ -154,7 +154,7 @@ export default async function AdminPanditsPage() {
 
           <p className="mt-2 text-gray-600">
             View and manage Pandits registered with
-            DivyaArpan.
+            DivyaDarpan.
           </p>
         </div>
 
@@ -171,7 +171,7 @@ export default async function AdminPanditsPage() {
             </h3>
 
             <p className="mx-auto mt-3 max-w-lg text-gray-600">
-              Start building the DivyaArpan Pandit
+              Start building the DivyaDarpan Pandit
               network by adding your first verified
               Pandit.
             </p>
@@ -213,7 +213,7 @@ export default async function AdminPanditsPage() {
                         <p className="mt-1 text-sm text-red-700">
                           This Pandit is currently
                           inactive and unavailable on
-                          the DivyaArpan marketplace.
+                          the DivyaDarpan marketplace.
                         </p>
 
                         {pandit.deactivationReason && (

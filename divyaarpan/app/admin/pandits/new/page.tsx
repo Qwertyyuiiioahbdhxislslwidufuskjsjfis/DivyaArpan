@@ -129,9 +129,9 @@ const initialDocuments: PanditDocumentForm[] = [
   },
   {
     documentType: "PARTNER_AGREEMENT",
-    label: "DivyaArpan Pandit Partner Agreement",
+    label: "DivyaDarpan Pandit Partner Agreement",
     description:
-      "Signed DivyaArpan Pandit Partner Agreement. We will prepare the final agreement separately.",
+      "Signed DivyaDarpan Pandit Partner Agreement. We will prepare the final agreement separately.",
     required: false,
     documentNumber: "",
     documentUrl: "",
@@ -151,6 +151,7 @@ export default function AddPanditPage() {
     name: "",
     mobile: "",
     email: "",
+    password: "",
     profileImage: "",
     gender: "",
     dateOfBirth: "",
@@ -404,6 +405,16 @@ export default function AddPanditPage() {
       return;
     }
 
+    if (!form.email.trim()) {
+      setMessage("Please enter the Pandit's email address.");
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setMessage("Pandit login password must be at least 8 characters.");
+      return;
+    }
+
     if (!form.city.trim() || !form.state.trim()) {
       setMessage("Please enter the city and state.");
       return;
@@ -534,7 +545,7 @@ export default function AddPanditPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-orange-100">
-              Register a Pandit for the DivyaArpan network.
+              Register a Pandit for the DivyaDarpan network.
               Verification can be completed before the Pandit goes
               live for devotees.
             </p>
@@ -582,7 +593,7 @@ export default function AddPanditPage() {
                 />
               </Field>
 
-              <Field label="Email">
+              <Field label="Email *">
                 <input
                   type="email"
                   value={form.email}
@@ -591,6 +602,21 @@ export default function AddPanditPage() {
                   }
                   placeholder="pandit@example.com"
                   className="inputStyle"
+                  required
+                />
+              </Field>
+
+              <Field label="Login Password *">
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(event) =>
+                    updateForm("password", event.target.value)
+                  }
+                  placeholder="Create Pandit login password"
+                  className="inputStyle"
+                  minLength={8}
+                  required
                 />
               </Field>
 
@@ -1108,7 +1134,7 @@ export default function AddPanditPage() {
                 Upload documents required for Pandit identity,
                 background and professional verification.
                 Documents will remain pending until reviewed by
-                DivyaArpan Admin.
+                DivyaDarpan Admin.
               </p>
             </div>
 
@@ -1289,7 +1315,7 @@ export default function AddPanditPage() {
               New Pandits will be registered with{" "}
               <strong>PENDING</strong> verification status.
               Uploading a document does not automatically verify
-              it. DivyaArpan Admin will review the Pandit and
+              it. DivyaDarpan Admin will review the Pandit and
               documents before activation.
             </p>
           </div>

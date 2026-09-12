@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div>
             <Link href="/" className="text-2xl font-bold tracking-tight">
-              DivyaArpan
+              DivyaDarpan
             </Link>
             <p className="mt-3 max-w-xl text-sm leading-7 text-orange-100">
               A spiritual platform connecting devotees with trusted temple rituals, pooja services, and guided support.
@@ -19,12 +19,13 @@ export default function Footer() {
             <Link href="/poojas" className="transition hover:text-white">Poojas</Link>
             <Link href="/book-my-pandit" className="transition hover:text-white">Book My Pandit</Link>
             <Link href="/my-bookings" className="transition hover:text-white">My Bookings</Link>
+            <Link href="/pandit/register" className="transition hover:text-white">Become a Pandit</Link>
             <Link href="/contact" className="transition hover:text-white">Contact</Link>
           </nav>
         </div>
 
         <div className="mt-8 border-t border-orange-500/60 pt-6 text-sm text-orange-100">
-          © 2026 DivyaArpan. All rights reserved.
+          © 2026 DivyaDarpan. All rights reserved.
         </div>
       </div>
     </footer>

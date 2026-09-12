@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { requireRole } from "../../../../lib/auth";
+import { getCurrentUserFromRequest } from "../../../../lib/auth";
 
 const prisma = new PrismaClient();
-
-/*
-|--------------------------------------------------------------------------
-| PATCH - Change Pandit Online / Offline Status
-|--------------------------------------------------------------------------
-|
-| PATCH /api/pandits/:id/online-status
-|
-| Body:
-|
-| {
-|   "isOnline": true
-| }
-|
-*/
 
 export async function PATCH(
   request: NextRequest,
@@ -28,67 +13,48 @@ export async function PATCH(
   }
 ) {
   try {
-    if (!(await requireRole("ADMIN"))) {
-      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
-    }
-    const { id } = await context.params;
+    const user = await getCurrentUserFromRequest(request);
 
-    const panditId = Number(id);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Validate Pandit ID
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-      !Number.isInteger(panditId) ||
-      panditId <= 0
-    ) {
+    if (!user || !["ADMIN", "PANDIT"].includes(user.role)) {
       return NextResponse.json(
-        {
-          message: "Invalid Pandit ID.",
-        },
-        {
-          status: 400,
-        }
+        { message: "Authentication required." },
+        { status: 401 }
       );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Read Request
-    |--------------------------------------------------------------------------
-    */
+    const { id } = await context.params;
+    const panditId = Number(id);
+
+    if (!Number.isInteger(panditId) || panditId <= 0) {
+      return NextResponse.json(
+        { message: "Invalid Pandit ID." },
+        { status: 400 }
+      );
+    }
+
+    // Pandit can update only his/her own status.
+    if (user.role === "PANDIT" && user.panditId !== panditId) {
+      return NextResponse.json(
+        { message: "You can only change your own online status." },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
 
     if (typeof body.isOnline !== "boolean") {
       return NextResponse.json(
-        {
-          message:
-            "isOnline must be true or false.",
-        },
-        {
-          status: 400,
-        }
+        { message: "isOnline must be true or false." },
+        { status: 400 }
       );
     }
 
-    const requestedOnlineStatus =
-      body.isOnline;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Fetch Pandit
-    |--------------------------------------------------------------------------
-    */
+    const requestedOnlineStatus = body.isOnline;
 
     const pandit = await prisma.pandit.findUnique({
       where: {
         id: panditId,
       },
-
       select: {
         id: true,
         panditCode: true,
@@ -101,105 +67,59 @@ export async function PATCH(
 
     if (!pandit) {
       return NextResponse.json(
-        {
-          message: "Pandit not found.",
-        },
-        {
-          status: 404,
-        }
+        { message: "Pandit not found." },
+        { status: 404 }
       );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Going Online - Eligibility Checks
-    |--------------------------------------------------------------------------
-    |
-    | Going Offline is always allowed.
-    |
-    */
-
+    // Going offline is always allowed.
+    // Going online requires an active + verified Pandit.
     if (requestedOnlineStatus) {
-      /*
-      |--------------------------------------------------------------------------
-      | Pandit Must Be Active
-      |--------------------------------------------------------------------------
-      */
-
       if (!pandit.isActive) {
         return NextResponse.json(
           {
             message:
-              "Inactive Pandit cannot go online. Reactivate the Pandit first.",
+              "Inactive Pandit cannot go online. Please contact DivyaDarpan support.",
           },
-          {
-            status: 403,
-          }
+          { status: 403 }
         );
       }
 
-      /*
-      |--------------------------------------------------------------------------
-      | Pandit Must Be Verified
-      |--------------------------------------------------------------------------
-      */
-
-      if (
-        pandit.verificationStatus !==
-        "VERIFIED"
-      ) {
+      if (pandit.verificationStatus !== "VERIFIED") {
         return NextResponse.json(
           {
             message:
               "Pandit must be verified before going online.",
           },
-          {
-            status: 403,
-          }
+          { status: 403 }
         );
       }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Update Online Status
-    |--------------------------------------------------------------------------
-    */
-
-    const updatedPandit =
-      await prisma.pandit.update({
-        where: {
-          id: panditId,
-        },
-
-        data: {
-          isOnline:
-            requestedOnlineStatus,
-        },
-
-        select: {
-          id: true,
-          panditCode: true,
-          name: true,
-          verificationStatus: true,
-          isActive: true,
-          isOnline: true,
-          acceptsImmediate: true,
-          acceptsScheduled: true,
-        },
-      });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Success
-    |--------------------------------------------------------------------------
-    */
+    const updatedPandit = await prisma.pandit.update({
+      where: {
+        id: panditId,
+      },
+      data: {
+        isOnline: requestedOnlineStatus,
+      },
+      select: {
+        id: true,
+        panditCode: true,
+        name: true,
+        verificationStatus: true,
+        isActive: true,
+        isOnline: true,
+        acceptsImmediate: true,
+        acceptsScheduled: true,
+      },
+    });
 
     return NextResponse.json({
+      success: true,
       message: updatedPandit.isOnline
-        ? "Pandit is now online."
-        : "Pandit is now offline.",
-
+        ? "You are now online."
+        : "You are now offline.",
       pandit: updatedPandit,
     });
   } catch (error) {
@@ -210,12 +130,10 @@ export async function PATCH(
 
     return NextResponse.json(
       {
-        message:
-          "Failed to update Pandit online status.",
+        success: false,
+        message: "Failed to update online status.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

@@ -40,6 +40,13 @@ type PanditBooking = {
   updatedAt: string;
 };
 
+type DeclinedOffer = {
+  id: number;
+  rejectionReason: string | null;
+  respondedAt: string | null;
+  pandit: { name: string; panditCode: string };
+};
+
 export default function ManagePanditBookingPage() {
   const params = useParams();
 
@@ -47,6 +54,8 @@ export default function ManagePanditBookingPage() {
 
   const [booking, setBooking] =
     useState<PanditBooking | null>(null);
+  const [declinedOffers, setDeclinedOffers] =
+    useState<DeclinedOffer[]>([]);
 
   const [amount, setAmount] = useState("");
   const [panditName, setPanditName] = useState("");
@@ -85,6 +94,7 @@ export default function ManagePanditBookingPage() {
       const fetchedBooking: PanditBooking = data.booking;
 
       setBooking(fetchedBooking);
+      setDeclinedOffers(data.offers || []);
 
       setAmount(
         fetchedBooking.amount
@@ -346,6 +356,26 @@ export default function ManagePanditBookingPage() {
             </div>
           )}
 
+          {declinedOffers.length > 0 && (
+            <div className="rounded-3xl bg-white p-7 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wider text-orange-600">
+                Pandit Rejection Reasons
+              </p>
+              <div className="mt-5 space-y-3">
+                {declinedOffers.map((offer) => (
+                  <div key={offer.id} className="rounded-xl bg-red-50 p-4">
+                    <p className="font-semibold text-gray-900">
+                      {offer.pandit.name} ({offer.pandit.panditCode})
+                    </p>
+                    <p className="mt-1 text-sm text-gray-700">
+                      {offer.rejectionReason}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Payment information */}
 
           <div className="rounded-3xl bg-white p-7 shadow-sm">
@@ -466,32 +496,44 @@ export default function ManagePanditBookingPage() {
                 }
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-orange-500"
               >
-                <option value="Payment Pending">
-                  Payment Pending
+                <option value="REQUESTED">
+                  Requested
                 </option>
 
-                <option value="Confirmed">
-                  Confirmed
+                <option value="SEARCHING">
+                  Searching for Pandit
                 </option>
 
-                <option value="Pandit Assignment Pending">
-                  Pandit Assignment Pending
-                </option>
-
-                <option value="Pandit Assigned">
+                <option value="PANDIT_ASSIGNED">
                   Pandit Assigned
                 </option>
 
-                <option value="Pooja Scheduled">
-                  Pooja Scheduled
+                <option value="AWAITING_PAYMENT">
+                  Awaiting Payment
                 </option>
 
-                <option value="Completed">
+                <option value="CONFIRMED">
+                  Confirmed
+                </option>
+
+                <option value="PANDIT_ON_THE_WAY">
+                  Pandit On The Way
+                </option>
+
+                <option value="IN_PROGRESS">
+                  In Progress
+                </option>
+
+                <option value="COMPLETED">
                   Completed
                 </option>
 
-                <option value="Cancelled">
+                <option value="CANCELLED">
                   Cancelled
+                </option>
+
+                <option value="NO_PANDIT_AVAILABLE">
+                  No Pandit Available
                 </option>
               </select>
             </div>

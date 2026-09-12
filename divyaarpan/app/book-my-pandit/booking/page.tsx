@@ -47,6 +47,9 @@ const [language, setLanguage] = useState(searchParams.get("language") || "");
 const [date, setDate] = useState(searchParams.get("date") || "");
 const [time, setTime] = useState(searchParams.get("time") || "");
 const [sankalp, setSankalp] = useState(searchParams.get("sankalp") || "");
+const [bookingType, setBookingType] = useState(
+  searchParams.get("bookingType") === "IMMEDIATE" ? "IMMEDIATE" : "SCHEDULED"
+);
 
 const [devoteeName, setDevoteeName] = useState(
   searchParams.get("devoteeName") || ""
@@ -105,8 +108,7 @@ const [panditPreference, setPanditPreference] = useState(
   const canContinue =
   city.trim().length > 0 &&
   language.trim().length > 0 &&
-  date.trim().length > 0 &&
-  time.trim().length > 0 &&
+  (bookingType === "IMMEDIATE" || (date.trim().length > 0 && time.trim().length > 0)) &&
   devoteeName.trim().length > 0 &&
   mobile.trim().length >= 10 &&
   houseNo.trim().length > 0 &&
@@ -132,6 +134,8 @@ const [panditPreference, setPanditPreference] = useState(
   language,
   date,
   time,
+  bookingType,
+  urgency: bookingType === "IMMEDIATE" ? "ASAP" : "SCHEDULED",
   sankalp,
 
   devoteeName,
@@ -318,6 +322,27 @@ const [panditPreference, setPanditPreference] = useState(
 
               <div className="p-7 md:p-9">
                 <div className="grid gap-6 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <p className="mb-2 text-sm font-bold text-slate-700">
+                      Booking Mode
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setBookingType("SCHEDULED")}
+                        className={`rounded-xl border px-4 py-3 text-sm font-semibold ${bookingType === "SCHEDULED" ? "border-orange-600 bg-orange-50 text-orange-700" : "border-slate-200 bg-white text-slate-700"}`}
+                      >
+                        Scheduled
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBookingType("IMMEDIATE")}
+                        className={`rounded-xl border px-4 py-3 text-sm font-semibold ${bookingType === "IMMEDIATE" ? "border-orange-600 bg-orange-50 text-orange-700" : "border-slate-200 bg-white text-slate-700"}`}
+                      >
+                        Immediate
+                      </button>
+                    </div>
+                  </div>
                   {/* City */}
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
@@ -374,7 +399,7 @@ const [panditPreference, setPanditPreference] = useState(
                   </div>
 
                   {/* Date */}
-                  <div>
+                  <div className={bookingType === "IMMEDIATE" ? "opacity-50" : ""}>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Preferred Date
                       <span className="text-orange-600"> *</span>
@@ -389,6 +414,7 @@ const [panditPreference, setPanditPreference] = useState(
                       <input
                         type="date"
                         value={date}
+                        disabled={bookingType === "IMMEDIATE"}
                         min={new Date()
                           .toISOString()
                           .split("T")[0]}
@@ -401,7 +427,7 @@ const [panditPreference, setPanditPreference] = useState(
                   </div>
 
                   {/* Time */}
-                  <div>
+                  <div className={bookingType === "IMMEDIATE" ? "opacity-50" : ""}>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Preferred Time
                       <span className="text-orange-600"> *</span>
@@ -415,6 +441,7 @@ const [panditPreference, setPanditPreference] = useState(
 
                       <select
                         value={time}
+                        disabled={bookingType === "IMMEDIATE"}
                         onChange={(e) =>
                           setTime(e.target.value)
                         }

@@ -77,7 +77,7 @@ export default function AddTemplePage() {
           </h1>
 
           <p className="mt-2 text-orange-100">
-            Add a new temple to the DivyaArpan platform.
+            Add a new temple to the DivyaDarpan platform.
           </p>
         </div>
       </section>

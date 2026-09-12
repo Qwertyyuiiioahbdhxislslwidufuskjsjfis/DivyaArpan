@@ -26,6 +26,7 @@ type PanditBooking = {
   date: string;
   time: string;
   sankalp: string | null;
+  samagriRequired: boolean;
   devoteeName: string;
   mobile: string;
   email: string | null;
@@ -286,7 +287,7 @@ function PaymentSuccessPageContent() {
 
     {/* Eyebrow */}
     <p className="mt-8 text-xs font-bold uppercase tracking-[0.35em] text-orange-100 md:text-sm">
-      DivyaArpan Booking Confirmed
+      DivyaDarpan Booking Confirmed
     </p>
 
     {/* Main Heading */}
@@ -297,7 +298,7 @@ function PaymentSuccessPageContent() {
     {/* Description */}
     <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-orange-50 md:text-lg md:leading-8">
       Your payment has been received successfully.
-      Your pooja has been arranged with DivyaArpan,
+      Your pooja has been arranged with DivyaDarpan,
       and your assigned Pandit is ready to serve you.
     </p>
 
@@ -336,7 +337,7 @@ function PaymentSuccessPageContent() {
             </p>
 
             <p className="mx-auto mt-3 max-w-3xl leading-7 text-gray-600">
-              DivyaArpan has successfully confirmed
+              DivyaDarpan has successfully confirmed
               your booking and assigned a verified
               Pandit for your pooja. Please keep your
               Booking ID safely for any future
@@ -426,12 +427,12 @@ function PaymentSuccessPageContent() {
 
                     <div>
                       <h3 className="font-bold text-gray-900">
-                        Verified by DivyaArpan
+                        Verified by DivyaDarpan
                       </h3>
 
                       <p className="mt-2 leading-6 text-gray-600">
                         Your Pandit has been verified
-                        through the DivyaArpan platform
+                        through the DivyaDarpan platform
                         and assigned according to your
                         booking requirements.
                       </p>
@@ -538,13 +539,13 @@ function PaymentSuccessPageContent() {
                   </p>
 
                   <h2 className="mt-1 text-2xl font-bold text-gray-900">
-                    Contact DivyaArpan Support
+                    Contact DivyaDarpan Support
                   </h2>
 
                   <p className="mt-2 max-w-2xl leading-6 text-gray-600">
                     For Pandit coordination, timing
                     changes, location assistance, or any
-                    booking-related help, our DivyaArpan
+                    booking-related help, our DivyaDarpan
                     team is here for you.
                   </p>
                 </div>
@@ -552,7 +553,7 @@ function PaymentSuccessPageContent() {
 
               <div className="shrink-0 rounded-2xl bg-white px-6 py-4 text-center shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  DivyaArpan Support
+                  DivyaDarpan Support
                 </p>
 
                 <p className="mt-1 text-lg font-bold text-orange-700">
@@ -565,7 +566,7 @@ function PaymentSuccessPageContent() {
               <p className="text-sm leading-6 text-gray-600">
                 🔒 For your privacy and security, the
                 Pandit&apos;s personal contact number is not
-                shared directly. Please contact DivyaArpan
+                shared directly. Please contact DivyaDarpan
                 Support and keep your Booking ID ready.
                 Our team will coordinate with the Pandit
                 whenever required.
@@ -595,13 +596,13 @@ function PaymentSuccessPageContent() {
 
           <div className="rounded-3xl bg-white p-8 text-center shadow-sm md:p-10">
             <p className="text-2xl font-bold text-gray-900">
-              Thank you for trusting DivyaArpan. 🙏
+              Thank you for trusting DivyaDarpan. 🙏
             </p>
 
             <p className="mx-auto mt-3 max-w-2xl leading-7 text-gray-600">
               We are honoured to be a part of your sacred
               occasion. Your booking has been successfully
-              recorded with DivyaArpan.
+              recorded with DivyaDarpan.
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

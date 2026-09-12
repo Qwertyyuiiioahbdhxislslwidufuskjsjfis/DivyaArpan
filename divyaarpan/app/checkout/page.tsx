@@ -62,7 +62,7 @@ export default function Checkout() {
           </div>
 
           <p className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">
-            DivyaArpan
+            DivyaDarpan
           </p>
 
           <h1 className="mt-3 font-serif text-3xl font-bold text-[#10264b]">
@@ -82,7 +82,7 @@ export default function Checkout() {
       <main className="min-h-screen bg-[#fff9f3] flex items-center justify-center px-6">
         <div className="text-center" role="alert">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl text-red-600">!</div>
-          <p className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">DivyaArpan</p>
+          <p className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">DivyaDarpan</p>
           <h1 className="mt-3 font-serif text-3xl font-bold text-[#10264b]">Booking could not be loaded</h1>
           <p className="mt-2 text-slate-500">{error || "This booking is unavailable."}</p>
           <Link href="/temples" className="mt-6 inline-flex rounded-xl bg-[#f45112] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#d9430b]">Back to Temples</Link>
@@ -99,7 +99,7 @@ export default function Checkout() {
         <div className="mx-auto max-w-3xl text-center">
 
           <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">
-            DivyaArpan
+            DivyaDarpan
           </p>
 
           <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-2xl shadow-sm">
@@ -431,7 +431,7 @@ export default function Checkout() {
 
             <span>🔐 Secure payment</span>
             <span>🧾 Booking ID: {booking.bookingId}</span>
-            <span>🙏 DivyaArpan</span>
+            <span>🙏 DivyaDarpan</span>
 
           </div>
 

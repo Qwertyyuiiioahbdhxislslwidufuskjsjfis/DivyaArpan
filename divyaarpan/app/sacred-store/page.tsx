@@ -46,7 +46,7 @@ export default function SacredStorePage() {
         <div className="relative mx-auto max-w-7xl px-6 py-24 text-center md:py-28">
           <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/30 bg-white/10 px-5 py-2 text-sm font-semibold text-orange-100 backdrop-blur">
             <ShoppingBag size={16} />
-            DivyaArpan Sacred Store
+            DivyaDarpan Sacred Store
           </div>
 
           <h1 className="mt-7 text-4xl font-extrabold leading-tight text-white sm:text-5xl md:text-6xl">
@@ -154,7 +154,7 @@ export default function SacredStorePage() {
       <section className="px-6 py-24">
         <div className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl bg-gradient-to-r from-orange-950 via-orange-900 to-amber-700 px-8 py-14 text-center md:px-14">
           <h2 className="text-3xl font-bold text-white md:text-4xl">
-            Stay connected with DivyaArpan
+            Stay connected with DivyaDarpan
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl leading-7 text-orange-100">

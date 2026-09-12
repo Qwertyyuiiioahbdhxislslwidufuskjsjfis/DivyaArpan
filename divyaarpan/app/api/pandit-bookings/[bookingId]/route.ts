@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { requireRole } from "../../../lib/auth";
-import { getCurrentUser } from "../../../lib/auth";
-import { hasGuestBookingAccess } from "../../../lib/booking-access";
+import { getCurrentUser, getCurrentUserFromRequest } from "../../../lib/auth";
+import { addMobileCors } from "../../../lib/mobile-cors";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -14,6 +14,21 @@ const prisma =
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
+}
+
+function mobileJson(
+  body: unknown,
+  init?: ResponseInit
+) {
+  return addMobileCors(
+    NextResponse.json(body, init)
+  );
+}
+
+export async function OPTIONS() {
+  return addMobileCors(
+    new NextResponse(null, { status: 204 })
+  );
 }
 
 type RouteContext = {
@@ -37,18 +52,22 @@ export async function GET(
       include: { statusHistory: { orderBy: { createdAt: "desc" } } },
     });
 
-    const user = await getCurrentUser();
-    const isOwner = user?.role === "DEVOTEE" && booking?.devoteeId === user.devoteeId;
-    const isAdmin = user?.role === "ADMIN";
-    if (!isOwner && !isAdmin && !hasGuestBookingAccess(request, bookingId)) {
-      return NextResponse.json(
-        { success: false, error: "Pandit booking not found." },
-        { status: 404 }
+    const user = await getCurrentUserFromRequest(request);
+
+    if (!user) {
+      return mobileJson(
+        {
+          success: false,
+          error: "Authentication required.",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
     if (!booking) {
-      return NextResponse.json(
+      return mobileJson(
         {
           success: false,
           error: "Pandit booking not found.",
@@ -59,14 +78,60 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
+    if (
+      user.role === "DEVOTEE" &&
+      booking.devoteeId !== user.devoteeId
+    ) {
+      return mobileJson(
+        {
+          success: false,
+          error: "Pandit booking not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    if (
+      user.role === "PANDIT" &&
+      booking.panditId !== user.panditId
+    ) {
+      return mobileJson(
+        {
+          success: false,
+          error: "Pandit booking not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    if (
+      user.role !== "ADMIN" &&
+      user.role !== "DEVOTEE" &&
+      user.role !== "PANDIT"
+    ) {
+      return mobileJson(
+        {
+          success: false,
+          error: "Access denied.",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    return mobileJson({
       success: true,
       booking,
     });
   } catch (error) {
     console.error("GET PANDIT BOOKING ERROR:", error);
 
-    return NextResponse.json(
+    return mobileJson(
       {
         success: false,
         error: "Unable to fetch pandit booking.",

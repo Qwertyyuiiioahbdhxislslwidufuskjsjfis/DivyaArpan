@@ -106,7 +106,7 @@ export default function AddPoojaPage() {
           </h1>
 
           <p className="mt-2 text-orange-100">
-            Add a pooja service to a temple on DivyaArpan.
+            Add a pooja service to a temple on DivyaDarpan.
           </p>
         </div>
       </section>

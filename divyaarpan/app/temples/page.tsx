@@ -65,14 +65,14 @@ export default async function Temples() {
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-orange-100">
             Discover revered temples, explore their spiritual
             significance and book authentic poojas through
-            DivyaArpan.
+            DivyaDarpan.
           </p>
 
           {/* Trust badges */}
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur">
               <Sparkles size={17} className="text-amber-300" />
-              DivyaArpan temple listings
+              DivyaDarpan temple listings
             </div>
 
             <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur">
@@ -99,7 +99,7 @@ export default async function Temples() {
             </h2>
 
             <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-600">
-              Explore temples available on DivyaArpan and discover
+              Explore temples available on DivyaDarpan and discover
               their poojas, timings and devotional services.
             </p>
           </div>
@@ -123,7 +123,7 @@ export default async function Temples() {
 
             <p className="mx-auto mt-3 max-w-lg text-slate-600">
               We are continuously adding sacred temples and
-              devotional services to DivyaArpan.
+              devotional services to DivyaDarpan.
             </p>
           </div>
         ) : (
@@ -146,7 +146,7 @@ export default async function Temples() {
 
                   <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-orange-700 shadow-md backdrop-blur">
                     <Sparkles size={15} />
-                    DivyaArpan Listing
+                    DivyaDarpan Listing
                   </div>
 
                   {/* Gradient */}
@@ -239,7 +239,7 @@ export default async function Temples() {
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Book devotional services through the DivyaArpan
+                  Book devotional services through the DivyaDarpan
                   platform.
                 </p>
               </div>

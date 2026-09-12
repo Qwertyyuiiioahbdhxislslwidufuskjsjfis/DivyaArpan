@@ -1,0 +1,1081 @@
+import { Ionicons } from "@expo/vector-icons";
+import {
+  router,
+  useLocalSearchParams,
+} from "expo-router";
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+
+import PanditShell from "@/components/pandit/PanditShell";
+import {
+  Colors,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+import { panditApiFetch } from "@/lib/api";
+
+type Booking = {
+  id: number;
+  bookingId: string;
+  service: string;
+  city: string;
+  state: string | null;
+  address: string;
+  pincode: string | null;
+  language: string;
+  date: string;
+  time: string;
+  sankalp: string | null;
+  devoteeName: string;
+  mobile: string;
+  email: string | null;
+  amount: number | null;
+  bookingType: string;
+  urgency: string;
+  status: string;
+  paymentStatus: string;
+  samagriCharges: number | null;
+};
+
+type Offer = {
+  id: number;
+  status: string;
+  offeredAmount: number | null;
+  expiresAt: string | null;
+  booking: Booking;
+};
+
+type DashboardResponse = {
+  unreadNotifications?: number;
+  pendingOffers?: Offer[];
+};
+
+function money(paise: number | null | undefined) {
+  if (paise == null) return "Price to be confirmed";
+  return `₹${(paise / 100).toLocaleString("en-IN")}`;
+}
+
+export default function RequestDetailsScreen() {
+  const { id } =
+    useLocalSearchParams<{ id: string }>();
+
+  const [offer, setOffer] =
+    useState<Offer | null>(null);
+  const [loading, setLoading] =
+    useState(true);
+  const [submitting, setSubmitting] =
+    useState(false);
+  const [error, setError] =
+    useState("");
+  const [showReject, setShowReject] =
+    useState(false);
+  const [rejectReason, setRejectReason] =
+    useState("");
+  const [notificationCount, setNotificationCount] =
+    useState(0);
+
+  const loadOffer = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response =
+        await panditApiFetch(
+          "/api/pandit/dashboard"
+        );
+
+      const data =
+        (await response.json()) as
+          DashboardResponse & {
+            message?: string;
+          };
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to load booking request."
+        );
+      }
+
+      setNotificationCount(
+        Number(data.unreadNotifications ?? 0)
+      );
+
+      const found =
+        data.pendingOffers?.find(
+          (item) =>
+            String(item.id) === String(id)
+        ) ?? null;
+
+      if (!found) {
+        setError(
+          "This request is no longer pending. It may already have been accepted, rejected or expired."
+        );
+        setOffer(null);
+        return;
+      }
+
+      setOffer(found);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to load booking request.";
+
+      if (
+        message === "AUTH_REQUIRED" ||
+        message === "SESSION_EXPIRED"
+      ) {
+        router.replace("/");
+        return;
+      }
+
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    void loadOffer();
+  }, [loadOffer]);
+
+  async function acceptRequest() {
+    if (!offer || submitting) return;
+
+    setSubmitting(true);
+
+    try {
+      const response =
+        await panditApiFetch(
+          `/api/pandit/offers/${offer.id}/accept`,
+          {
+            method: "POST",
+          }
+        );
+
+      const data =
+        (await response.json()) as {
+          success?: boolean;
+          message?: string;
+          booking?: {
+            bookingId?: string;
+          };
+        };
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+            "Unable to accept this request."
+        );
+      }
+
+      const realBookingId =
+        data.booking?.bookingId;
+
+      if (!realBookingId) {
+        throw new Error(
+          "Booking was accepted, but the booking ID was not returned."
+        );
+      }
+
+      if (Platform.OS === "web") {
+        router.replace({
+          pathname: "/bookings/[id]",
+          params: {
+            id: realBookingId,
+          },
+        });
+        return;
+      }
+
+      Alert.alert(
+        "Request Accepted",
+        "The booking has been assigned to you.",
+        [
+          {
+            text: "View Booking",
+            onPress: () =>
+              router.replace({
+                pathname: "/bookings/[id]",
+                params: {
+                  id: realBookingId,
+                },
+              }),
+          },
+        ]
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to accept this request.";
+
+      if (
+        message === "AUTH_REQUIRED" ||
+        message === "SESSION_EXPIRED"
+      ) {
+        router.replace("/");
+        return;
+      }
+
+      Alert.alert(
+        "Unable to Accept",
+        message
+      );
+
+      await loadOffer();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function rejectRequest() {
+    if (
+      !offer ||
+      submitting ||
+      !rejectReason.trim()
+    ) {
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response =
+        await panditApiFetch(
+          `/api/pandit-bookings/offers/${offer.id}/reject`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              reason: rejectReason.trim(),
+            }),
+          }
+        );
+
+      const data =
+        (await response.json()) as {
+          success?: boolean;
+          message?: string;
+        };
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+            "Unable to reject this request."
+        );
+      }
+
+      Alert.alert(
+        "Request Rejected",
+        "Your response has been recorded.",
+        [
+          {
+            text: "OK",
+            onPress: () =>
+              router.replace("/requests"),
+          },
+        ]
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to reject this request.";
+
+      if (
+        message === "AUTH_REQUIRED" ||
+        message === "SESSION_EXPIRED"
+      ) {
+        router.replace("/");
+        return;
+      }
+
+      Alert.alert(
+        "Unable to Reject",
+        message
+      );
+
+      await loadOffer();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const booking = offer?.booking;
+
+  return (
+    <PanditShell
+      activeTab="requests"
+      notificationCount={notificationCount}
+      onTabPress={(tab) => {
+        if (tab === "home")
+          router.replace("/dashboard");
+        if (tab === "requests")
+          router.replace("/requests");
+        if (tab === "bookings")
+          router.replace("/bookings");
+        if (tab === "notifications")
+          router.replace("/notifications");
+        if (tab === "profile")
+          router.replace("/profile");
+      }}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={20}
+            color={Colors.text}
+          />
+          <Text style={styles.backText}>
+            Booking Request
+          </Text>
+        </Pressable>
+
+        {loading ? (
+          <View style={styles.stateCard}>
+            <ActivityIndicator
+              size="large"
+              color={Colors.primary}
+            />
+            <Text style={styles.stateText}>
+              Loading request...
+            </Text>
+          </View>
+        ) : error || !offer || !booking ? (
+          <View style={styles.stateCard}>
+            <Ionicons
+              name="information-circle-outline"
+              size={36}
+              color={Colors.primary}
+            />
+
+            <Text style={styles.errorText}>
+              {error ||
+                "Booking request not found."}
+            </Text>
+
+            <Pressable
+              onPress={() =>
+                router.replace("/requests")
+              }
+              style={styles.primaryButton}
+            >
+              <Text style={styles.primaryButtonText}>
+                Back to Requests
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <View style={styles.hero}>
+              <View style={styles.heroIcon}>
+                <Ionicons
+                  name="sparkles-outline"
+                  size={30}
+                  color={Colors.primary}
+                />
+              </View>
+
+              <Text style={styles.serviceName}>
+                {booking.service}
+              </Text>
+
+              <Text style={styles.bookingId}>
+                {booking.bookingId}
+              </Text>
+
+              <View style={styles.pendingBadge}>
+                <View style={styles.pendingDot} />
+                <Text style={styles.pendingText}>
+                  Pending Response
+                </Text>
+              </View>
+            </View>
+
+            <Section title="Schedule">
+              <DetailRow
+                icon="calendar-outline"
+                label="Date"
+                value={booking.date}
+              />
+
+              <DetailRow
+                icon="time-outline"
+                label="Time"
+                value={booking.time}
+              />
+
+              <DetailRow
+                icon="hourglass-outline"
+                label="Booking Type"
+                value={
+                  booking.bookingType ===
+                  "IMMEDIATE"
+                    ? "Immediate"
+                    : "Scheduled"
+                }
+              />
+            </Section>
+
+            <Section title="Service Location">
+              <DetailRow
+                icon="business-outline"
+                label="City"
+                value={[
+                  booking.city,
+                  booking.state,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              />
+
+              <DetailRow
+                icon="location-outline"
+                label="Address"
+                value={booking.address}
+              />
+
+              {booking.pincode && (
+                <DetailRow
+                  icon="navigate-outline"
+                  label="Pincode"
+                  value={booking.pincode}
+                />
+              )}
+            </Section>
+
+            <Section title="Devotee Details">
+              <View style={styles.devoteeCard}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {booking.devoteeName
+                      ?.trim()
+                      .charAt(0)
+                      .toUpperCase() || "D"}
+                  </Text>
+                </View>
+
+                <View style={styles.devoteeInfo}>
+                  <Text
+                    style={styles.devoteeName}
+                  >
+                    {booking.devoteeName}
+                  </Text>
+
+                  <Text
+                    style={styles.devoteeLocation}
+                  >
+                    {booking.city}
+                  </Text>
+                </View>
+              </View>
+
+              <DetailRow
+                icon="call-outline"
+                label="Contact"
+                value="Available after acceptance"
+              />
+            </Section>
+
+            <Section title="Pooja Details">
+              <DetailRow
+                icon="sparkles-outline"
+                label="Pooja"
+                value={booking.service}
+              />
+
+              <DetailRow
+                icon="language-outline"
+                label="Preferred Language"
+                value={booking.language}
+              />
+
+              <DetailRow
+                icon="cube-outline"
+                label="Samagri"
+                value={
+                  booking.samagriCharges != null &&
+                  booking.samagriCharges > 0
+                    ? "Included in quotation"
+                    : "As per booking"
+                }
+              />
+            </Section>
+
+            <Section title="Mannat / Sankalp">
+              <View style={styles.sankalpBox}>
+                <Ionicons
+                  name="heart-outline"
+                  size={20}
+                  color={Colors.primary}
+                />
+
+                <Text style={styles.sankalpText}>
+                  {booking.sankalp?.trim() ||
+                    "No Sankalp details provided."}
+                </Text>
+              </View>
+            </Section>
+
+            <View style={styles.priceCard}>
+              <View>
+                <Text style={styles.priceLabel}>
+                  Final DivyaArpan Price
+                </Text>
+
+                <Text style={styles.price}>
+                  {money(
+                    offer.offeredAmount ??
+                      booking.amount
+                  )}
+                </Text>
+              </View>
+
+              <View style={styles.lockBadge}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={14}
+                  color={Colors.primary}
+                />
+
+                <Text style={styles.lockText}>
+                  Fixed
+                </Text>
+              </View>
+            </View>
+
+            {showReject && (
+              <View style={styles.rejectCard}>
+                <Text style={styles.rejectTitle}>
+                  Reason for rejection
+                </Text>
+
+                <Text style={styles.rejectHelp}>
+                  A reason is required before this
+                  request can be declined.
+                </Text>
+
+                <TextInput
+                  value={rejectReason}
+                  onChangeText={setRejectReason}
+                  placeholder="Example: I am unavailable at this time..."
+                  placeholderTextColor={
+                    Colors.textMuted
+                  }
+                  multiline
+                  editable={!submitting}
+                  style={styles.rejectInput}
+                />
+
+                <View style={styles.rejectActions}>
+                  <Pressable
+                    disabled={submitting}
+                    onPress={() => {
+                      setShowReject(false);
+                      setRejectReason("");
+                    }}
+                    style={styles.secondaryButton}
+                  >
+                    <Text
+                      style={styles.secondaryButtonText}
+                    >
+                      Cancel
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    disabled={
+                      submitting ||
+                      !rejectReason.trim()
+                    }
+                    onPress={() =>
+                      void rejectRequest()
+                    }
+                    style={[
+                      styles.rejectConfirmButton,
+                      (submitting ||
+                        !rejectReason.trim()) &&
+                        styles.disabledButton,
+                    ]}
+                  >
+                    <Text
+                      style={styles.rejectConfirmText}
+                    >
+                      {submitting
+                        ? "Submitting..."
+                        : "Confirm Rejection"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            {!showReject && (
+              <View style={styles.actions}>
+                <Pressable
+                  disabled={submitting}
+                  onPress={() =>
+                    setShowReject(true)
+                  }
+                  style={styles.rejectButton}
+                >
+                  <Ionicons
+                    name="close-outline"
+                    size={19}
+                    color={Colors.error}
+                  />
+                  <Text style={styles.rejectText}>
+                    Reject
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  disabled={submitting}
+                  onPress={() =>
+                    void acceptRequest()
+                  }
+                  style={[
+                    styles.acceptButton,
+                    submitting &&
+                      styles.disabledButton,
+                  ]}
+                >
+                  {submitting ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={Colors.white}
+                    />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name="checkmark-outline"
+                        size={19}
+                        color={Colors.white}
+                      />
+                      <Text
+                        style={styles.acceptText}
+                      >
+                        Accept Request
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+              </View>
+            )}
+
+            <Text style={styles.footerNote}>
+              By accepting, you confirm your
+              availability for this booking.
+            </Text>
+          </>
+        )}
+
+        <View style={{ height: Spacing.xxl }} />
+      </ScrollView>
+    </PanditShell>
+  );
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>
+        {title}
+      </Text>
+
+      <View style={styles.sectionCard}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function DetailRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.detailRow}>
+      <View style={styles.detailIcon}>
+        <Ionicons
+          name={icon}
+          size={18}
+          color={Colors.primary}
+        />
+      </View>
+
+      <View style={styles.detailContent}>
+        <Text style={styles.detailLabel}>
+          {label}
+        </Text>
+
+        <Text style={styles.detailValue}>
+          {value || "Not provided"}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  backText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+  stateCard: {
+    minHeight: 260,
+    padding: Spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.white,
+  },
+  stateText: {
+    marginTop: 12,
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  errorText: {
+    marginTop: 12,
+    textAlign: "center",
+    fontSize: 13,
+    lineHeight: 19,
+    color: Colors.textSecondary,
+  },
+  primaryButton: {
+    marginTop: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primary,
+  },
+  primaryButtonText: {
+    fontWeight: "800",
+    color: Colors.white,
+  },
+  hero: {
+    alignItems: "center",
+    marginBottom: Spacing.xl,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.white,
+  },
+  heroIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF7E7",
+  },
+  serviceName: {
+    marginTop: 12,
+    textAlign: "center",
+    fontSize: 21,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  bookingId: {
+    marginTop: 5,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  pendingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#FFF7E7",
+  },
+  pendingDot: {
+    width: 7,
+    height: 7,
+    marginRight: 6,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+  },
+  pendingText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+  section: {
+    marginBottom: Spacing.lg,
+  },
+  sectionTitle: {
+    marginBottom: 8,
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  sectionCard: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.white,
+    overflow: "hidden",
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  detailIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF7E7",
+  },
+  detailContent: {
+    flex: 1,
+    marginLeft: 11,
+  },
+  detailLabel: {
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+  detailValue: {
+    marginTop: 3,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
+    color: Colors.text,
+  },
+  devoteeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF3D6",
+  },
+  avatarText: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+  devoteeInfo: {
+    flex: 1,
+    marginLeft: 11,
+  },
+  devoteeName: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  devoteeLocation: {
+    marginTop: 3,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  sankalpBox: {
+    flexDirection: "row",
+    gap: 10,
+    padding: Spacing.md,
+  },
+  sankalpText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+  },
+  priceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: "#F0D99A",
+    borderRadius: Radius.lg,
+    backgroundColor: "#FFF9ED",
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  price: {
+    marginTop: 4,
+    fontSize: 25,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  lockBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: Colors.white,
+  },
+  lockText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  rejectButton: {
+    flex: 1,
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: Colors.error,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.white,
+  },
+  rejectText: {
+    fontWeight: "800",
+    color: Colors.error,
+  },
+  acceptButton: {
+    flex: 1.4,
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primary,
+  },
+  acceptText: {
+    fontWeight: "800",
+    color: Colors.white,
+  },
+  disabledButton: {
+    opacity: 0.45,
+  },
+  footerNote: {
+    marginTop: 10,
+    textAlign: "center",
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+  rejectCard: {
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: "#F3C7C7",
+    borderRadius: Radius.lg,
+    backgroundColor: "#FFF8F8",
+  },
+  rejectTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  rejectHelp: {
+    marginTop: 4,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  rejectInput: {
+    minHeight: 105,
+    marginTop: 12,
+    padding: 12,
+    textAlignVertical: "top",
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    fontSize: 14,
+    color: Colors.text,
+    backgroundColor: Colors.white,
+  },
+  rejectActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+  },
+  secondaryButton: {
+    flex: 1,
+    minHeight: 46,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.white,
+  },
+  secondaryButtonText: {
+    fontWeight: "700",
+    color: Colors.text,
+  },
+  rejectConfirmButton: {
+    flex: 1.5,
+    minHeight: 46,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: Radius.md,
+    backgroundColor: Colors.error,
+  },
+  rejectConfirmText: {
+    fontWeight: "800",
+    color: Colors.white,
+  },
+});

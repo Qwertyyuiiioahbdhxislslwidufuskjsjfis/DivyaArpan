@@ -98,7 +98,7 @@ export default function BookMyPanditPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/30 bg-white/10 px-5 py-2 text-sm font-semibold text-orange-100 backdrop-blur">
                 <Sparkles size={16} />
-                DivyaArpan Pandit Services
+                DivyaDarpan Pandit Services
               </div>
 
               <h1 className="mt-7 text-5xl font-extrabold leading-tight text-white md:text-6xl">
@@ -110,7 +110,7 @@ export default function BookMyPanditPage() {
 
               <p className="mt-6 max-w-2xl text-lg leading-8 text-orange-100">
                 Choose your pooja, location, preferred language and
-                schedule. DivyaArpan will help coordinate a suitable
+                schedule. DivyaDarpan will help coordinate a suitable
                 pandit for your ceremony.
               </p>
 
@@ -369,7 +369,7 @@ export default function BookMyPanditPage() {
               </h2>
 
               <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-                DivyaArpan will continue adding more ceremonies and
+                DivyaDarpan will continue adding more ceremonies and
                 pandit services as the service network expands.
               </p>
             </div>
@@ -378,7 +378,7 @@ export default function BookMyPanditPage() {
               href="/contact"
               className="shrink-0 rounded-xl border border-orange-600 px-6 py-3.5 text-center font-bold text-orange-700 transition hover:bg-orange-50"
             >
-              Contact DivyaArpan
+              Contact DivyaDarpan
             </Link>
           </div>
         </div>

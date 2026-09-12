@@ -46,7 +46,7 @@ export default async function Pooja() {
         <div className="relative mx-auto max-w-7xl px-6 py-20 text-center md:py-24">
           <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/30 bg-white/10 px-5 py-2 text-sm font-semibold text-orange-100 backdrop-blur">
             <Sparkles size={16} />
-            DivyaArpan Pooja Services
+            DivyaDarpan Pooja Services
           </div>
           <h1 className="mt-7 text-4xl font-extrabold leading-tight text-white sm:text-5xl md:text-6xl">
             Choose a Pooja for your
@@ -70,7 +70,7 @@ export default async function Pooja() {
             </h2>
             <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-600">
               Every card is connected to its temple listing and the current
-              DivyaArpan booking journey.
+              DivyaDarpan booking journey.
             </p>
           </div>
           <div className="rounded-full bg-orange-100 px-5 py-2 text-sm font-semibold text-orange-700">

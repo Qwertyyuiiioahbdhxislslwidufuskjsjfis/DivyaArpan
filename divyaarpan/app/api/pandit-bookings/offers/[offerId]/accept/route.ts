@@ -56,10 +56,6 @@ export async function POST(
         throw new Error("BOOKING_ALREADY_ASSIGNED");
       }
 
-      if (offer.offeredAmount === null || !Number.isFinite(offer.offeredAmount) || offer.offeredAmount <= 0) {
-        throw new Error("OFFER_AMOUNT_INVALID");
-      }
-
       const acceptedOffer = await tx.panditBookingOffer.update({
         where: {
           id: offer.id,
@@ -77,7 +73,6 @@ export async function POST(
         data: {
           panditId: offer.panditId,
           panditName: offer.pandit.name,
-          amount: offer.offeredAmount,
           status: "PANDIT_ASSIGNED",
           assignedAt: new Date(),
         },
@@ -150,12 +145,6 @@ export async function POST(
         return NextResponse.json(
           { message: "Booking has already been assigned." },
           { status: 409 }
-        );
-
-      case "OFFER_AMOUNT_INVALID":
-        return NextResponse.json(
-          { message: "This offer does not have a valid payable amount." },
-          { status: 422 }
         );
 
       default:

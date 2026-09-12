@@ -13,7 +13,7 @@ export default function HomeFinalCta() {
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-blue-100 md:text-lg">
           Choose a Pooja or explore a temple listing, then continue with the
-          existing DivyaArpan booking journey at your own pace.
+          existing DivyaDarpan booking journey at your own pace.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link

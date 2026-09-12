@@ -200,15 +200,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "astrology") {
-      if (!user || user.role !== "DEVOTEE" || !user.devoteeId) {
-        return NextResponse.json(
-          { success: false, error: "Devotee authentication required." },
-          { status: 401 }
-        );
-      }
-
       const astrologyBooking = await prisma.astrologyBooking.findFirst({
-        where: { bookingId, devoteeId: user.devoteeId },
+        where: { bookingId, ...ownerFilter },
       });
 
       if (!astrologyBooking) {
@@ -221,13 +214,6 @@ export async function POST(request: NextRequest) {
       if (astrologyBooking.paymentStatus === "PAID") {
         return NextResponse.json(
           { success: false, error: "This consultation has already been paid." },
-          { status: 400 }
-        );
-      }
-
-      if (!Number.isFinite(astrologyBooking.amount) || astrologyBooking.amount <= 0) {
-        return NextResponse.json(
-          { success: false, error: "Invalid astrology booking amount." },
           { status: 400 }
         );
       }

@@ -164,7 +164,7 @@ export default function Payment() {
 
         currency: data.order.currency,
 
-        name: "DivyaArpan",
+        name: "DivyaDarpan",
 
         description: `${booking.temple} - ${booking.pooja}`,
 

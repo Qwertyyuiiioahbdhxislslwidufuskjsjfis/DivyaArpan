@@ -27,7 +27,7 @@ export default async function FeaturedTemples() {
         <div>
           <span className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">Sacred destinations</span>
           <h2 className="mt-2 text-4xl font-bold text-gray-900">Featured temples</h2>
-          <p className="mt-3 max-w-2xl text-gray-600">Discover the real temple listings managed in the DivyaArpan catalog.</p>
+          <p className="mt-3 max-w-2xl text-gray-600">Discover the real temple listings managed in the DivyaDarpan catalog.</p>
         </div>
 
         <Link href="/temples" className="font-semibold text-orange-600 transition hover:text-orange-700">
@@ -39,7 +39,7 @@ export default async function FeaturedTemples() {
         <div className="rounded-[28px] border border-orange-100 bg-white px-6 py-16 text-center shadow-sm">
           <div className="text-5xl">🛕</div>
           <h3 className="mt-5 text-2xl font-bold text-slate-900">Temples are being added</h3>
-          <p className="mx-auto mt-3 max-w-lg text-slate-600">The public temple catalog will appear here as active temple listings are added to the DivyaArpan database.</p>
+          <p className="mx-auto mt-3 max-w-lg text-slate-600">The public temple catalog will appear here as active temple listings are added to the DivyaDarpan database.</p>
         </div>
       ) : (
         <div className="grid items-stretch gap-8 md:grid-cols-2 lg:grid-cols-3">

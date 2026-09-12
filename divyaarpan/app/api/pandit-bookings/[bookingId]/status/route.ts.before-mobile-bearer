@@ -1,0 +1,152 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/app/lib/prisma";
+import { requireRole } from "../../../../lib/auth";
+import { createPanditNotification } from "@/lib/pandit-notifications";
+
+type RouteContext = {
+  params: Promise<{
+    bookingId: string;
+  }>;
+};
+
+const allowedTransitions: Record<string, string[]> = {
+  CONFIRMED: ["PANDIT_ON_THE_WAY"],
+  PANDIT_ON_THE_WAY: ["IN_PROGRESS"],
+  IN_PROGRESS: ["COMPLETED"],
+  COMPLETED: [],
+};
+
+export async function PUT(
+  request: Request,
+  context: RouteContext
+) {
+  try {
+    const user = await requireRole("PANDIT");
+
+    if (!user?.panditId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Pandit authentication required.",
+        },
+        { status: 401 }
+      );
+    }
+
+    const pandit = await prisma.pandit.findUnique({
+      where: { id: user.panditId },
+      select: { verificationStatus: true, isActive: true },
+    });
+    if (!pandit || pandit.verificationStatus !== "VERIFIED" || !pandit.isActive) {
+      return NextResponse.json(
+        { success: false, error: "Only verified active Pandits can update booking status." },
+        { status: 403 }
+      );
+    }
+
+    const { bookingId } = await context.params;
+
+    const body = await request.json();
+    const requestedStatus =
+      typeof body.status === "string"
+        ? body.status.trim()
+        : "";
+
+    const booking =
+      await prisma.panditBooking.findUnique({
+        where: {
+          bookingId,
+        },
+      });
+
+    if (!booking) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Booking not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (booking.panditId !== user.panditId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "You are not assigned to this booking.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const allowed =
+      allowedTransitions[booking.status] || [];
+
+    if (!allowed.includes(requestedStatus)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Cannot change status from ${booking.status} to ${requestedStatus}.`,
+        },
+        { status: 409 }
+      );
+    }
+
+    const updated = await prisma.panditBooking.updateMany({
+      where: {
+        bookingId,
+        panditId: user.panditId,
+        status: booking.status,
+      },
+      data: {
+        status: requestedStatus,
+        ...(requestedStatus === "COMPLETED" ? { completedAt: new Date() } : {}),
+      },
+    });
+    if (updated.count !== 1) {
+      return NextResponse.json(
+        { success: false, error: "This booking changed before your update could be applied. Please refresh it." },
+        { status: 409 }
+      );
+    }
+    const updatedBooking = await prisma.panditBooking.findUniqueOrThrow({
+      where: { bookingId },
+    });
+
+    await prisma.panditBookingStatusHistory.create({
+      data: {
+        bookingId: updatedBooking.id,
+        fromStatus: booking.status,
+        toStatus: updatedBooking.status,
+        actorRole: "PANDIT",
+      },
+    });
+    await createPanditNotification(prisma, {
+      panditId: user.panditId,
+      type: updatedBooking.status === "COMPLETED" ? "BOOKING_COMPLETED" : "BOOKING_STATUS_UPDATED",
+      title: updatedBooking.status === "COMPLETED" ? "Pooja completed" : "Booking status updated",
+      message: updatedBooking.status === "COMPLETED" ? `${updatedBooking.service} has been marked completed.` : `${updatedBooking.service} is now ${updatedBooking.status.replaceAll("_", " ").toLowerCase()}.`,
+      eventKey: `booking-status:${updatedBooking.id}:${updatedBooking.status}`,
+      bookingId: updatedBooking.id,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Booking status updated successfully.",
+      booking: updatedBooking,
+    });
+  } catch (error) {
+    console.error(
+      "PANDIT STATUS UPDATE ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Unable to update booking status.",
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -11,24 +11,6 @@ function isPhone(value: string) {
   return /^\+?[0-9\s-]{10,20}$/.test(value);
 }
 
-function isTodayOrFutureDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) {
-    return false;
-  }
-
-  const now = new Date();
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return date.getTime() >= today;
-}
-
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -74,7 +56,7 @@ export async function POST(request: Request) {
     if (birthPlace.length < 2 || birthPlace.length > 140) {
       return NextResponse.json({ success: false, error: "Please enter your birth place." }, { status: 400 });
     }
-    if (!isTodayOrFutureDate(preferredDate) || !/^\d{2}:\d{2}$/.test(preferredTime)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(preferredDate) || !/^\d{2}:\d{2}$/.test(preferredTime)) {
       return NextResponse.json({ success: false, error: "Please choose a valid preferred consultation slot." }, { status: 400 });
     }
     if (question.length < 15 || question.length > 2000) {

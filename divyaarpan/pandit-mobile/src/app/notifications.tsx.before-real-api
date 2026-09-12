@@ -1,0 +1,458 @@
+import React, { useState } from "react";
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
+import PanditShell from "@/components/pandit/PanditShell";
+import { Colors, Radius, Spacing } from "@/constants/theme";
+
+type NotificationType = "request" | "booking" | "payment" | "system";
+
+type NotificationItem = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  time: string;
+  unread: boolean;
+  route?: string;
+};
+
+const initialNotifications: NotificationItem[] = [
+  {
+    id: "1",
+    type: "request",
+    title: "New Pooja Request",
+    message:
+      "You have received a new Satyanarayan Pooja request in Andheri West.",
+    time: "10 min ago",
+    unread: true,
+    route: "/requests/DA-REQ-001",
+  },
+  {
+    id: "2",
+    type: "booking",
+    title: "Booking Confirmed",
+    message:
+      "Your Satyanarayan Pooja booking has been confirmed for today at 6:00 PM.",
+    time: "25 min ago",
+    unread: true,
+    route: "/bookings/DA-BKG-001",
+  },
+  {
+    id: "3",
+    type: "system",
+    title: "Profile Verified",
+    message:
+      "Your Pandit Partner profile has been successfully verified by DivyaArpan.",
+    time: "Yesterday",
+    unread: false,
+  },
+  {
+    id: "4",
+    type: "payment",
+    title: "Payment Update",
+    message:
+      "The payment for booking DA-BKG-001 is being processed.",
+    time: "Yesterday",
+    unread: false,
+    route: "/bookings/DA-BKG-001",
+  },
+];
+
+function getIcon(type: NotificationType): keyof typeof Ionicons.glyphMap {
+  switch (type) {
+    case "request":
+      return "document-text-outline";
+    case "booking":
+      return "calendar-outline";
+    case "payment":
+      return "wallet-outline";
+    default:
+      return "information-circle-outline";
+  }
+}
+
+function getIconColor(type: NotificationType) {
+  switch (type) {
+    case "request":
+      return Colors.primary;
+    case "booking":
+      return Colors.success;
+    case "payment":
+      return Colors.warning;
+    default:
+      return Colors.primaryDark;
+  }
+}
+
+export default function NotificationsScreen() {
+  const [notifications, setNotifications] = useState(
+    initialNotifications
+  );
+
+  const unreadCount = notifications.filter(
+    (item) => item.unread
+  ).length;
+
+  const markAllRead = () => {
+    setNotifications((items) =>
+      items.map((item) => ({
+        ...item,
+        unread: false,
+      }))
+    );
+  };
+
+  const openNotification = (item: NotificationItem) => {
+    setNotifications((items) =>
+      items.map((notification) =>
+        notification.id === item.id
+          ? { ...notification, unread: false }
+          : notification
+      )
+    );
+
+    if (item.route) {
+      router.push(item.route as any);
+    }
+  };
+
+  return (
+    <PanditShell
+      activeTab="notifications"
+      notificationCount={unreadCount}
+      onTabPress={(tab) => {
+        if (tab === "home") router.replace("/dashboard");
+        if (tab === "requests") router.replace("/requests");
+        if (tab === "bookings") router.replace("/bookings");
+        if (tab === "notifications") router.replace("/notifications");
+        if (tab === "profile") router.replace("/profile");
+      }}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>Alerts</Text>
+              <Text style={styles.subtitle}>
+                Stay updated with your DivyaArpan activities
+              </Text>
+            </View>
+
+            {unreadCount > 0 && (
+              <Pressable
+                onPress={markAllRead}
+                style={styles.markReadButton}
+              >
+                <Text style={styles.markReadText}>
+                  Mark all read
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          {unreadCount > 0 && (
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryIcon}>
+                <Ionicons
+                  name="notifications-outline"
+                  size={21}
+                  color={Colors.primaryDark}
+                />
+              </View>
+
+              <View style={styles.summaryText}>
+                <Text style={styles.summaryTitle}>
+                  {unreadCount} unread alert
+                  {unreadCount > 1 ? "s" : ""}
+                </Text>
+                <Text style={styles.summarySubtitle}>
+                  Tap an alert to view more details.
+                </Text>
+              </View>
+            </View>
+          )}
+
+          <Text style={styles.sectionTitle}>Recent Alerts</Text>
+
+          <View style={styles.list}>
+            {notifications.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => openNotification(item)}
+                style={({ pressed }) => [
+                  styles.notificationCard,
+                  item.unread && styles.unreadCard,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.notificationIcon,
+                    item.unread && styles.unreadIcon,
+                  ]}
+                >
+                  <Ionicons
+                    name={getIcon(item.type)}
+                    size={22}
+                    color={getIconColor(item.type)}
+                  />
+                </View>
+
+                <View style={styles.notificationBody}>
+                  <View style={styles.titleRow}>
+                    <Text
+                      style={[
+                        styles.notificationTitle,
+                        item.unread &&
+                          styles.notificationTitleUnread,
+                      ]}
+                    >
+                      {item.title}
+                    </Text>
+
+                    {item.unread && <View style={styles.unreadDot} />}
+                  </View>
+
+                  <Text style={styles.message}>
+                    {item.message}
+                  </Text>
+
+                  <Text style={styles.time}>{item.time}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.infoCard}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={21}
+              color={Colors.primaryDark}
+            />
+
+            <View style={styles.infoText}>
+              <Text style={styles.infoTitle}>
+                DivyaArpan Partner Alerts
+              </Text>
+              <Text style={styles.infoDescription}>
+                Important booking, verification and payment
+                updates will appear here.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </PanditShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: 120,
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: Spacing.lg,
+  },
+
+  headerText: {
+    flex: 1,
+  },
+
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  subtitle: {
+    marginTop: 4,
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+
+  markReadButton: {
+    marginLeft: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.primarySoft,
+  },
+
+  markReadText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.primaryDark,
+  },
+
+  summaryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.primarySoft,
+    borderWidth: 1,
+    borderColor: "#f5d9a5",
+  },
+
+  summaryIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.white,
+  },
+
+  summaryText: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  summaryTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  summarySubtitle: {
+    marginTop: 2,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+
+  sectionTitle: {
+    marginBottom: Spacing.md,
+    fontSize: 18,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  list: {
+    gap: Spacing.md,
+  },
+
+  notificationCard: {
+    flexDirection: "row",
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  unreadCard: {
+    backgroundColor: "#fffdf9",
+    borderColor: "#ead5b1",
+  },
+
+  notificationIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.surfaceSoft,
+  },
+
+  unreadIcon: {
+    backgroundColor: Colors.primarySoft,
+  },
+
+  notificationBody: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  notificationTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+
+  notificationTitleUnread: {
+    fontWeight: "800",
+  },
+
+  unreadDot: {
+    width: 8,
+    height: 8,
+    marginLeft: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.error,
+  },
+
+  message: {
+    marginTop: 5,
+    fontSize: 13,
+    lineHeight: 19,
+    color: Colors.textSecondary,
+  },
+
+  time: {
+    marginTop: 8,
+    fontSize: 11,
+    fontWeight: "600",
+    color: Colors.textMuted,
+  },
+
+  infoCard: {
+    flexDirection: "row",
+    marginTop: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: "#fff7ed",
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+  },
+
+  infoText: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  infoDescription: {
+    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 18,
+    color: Colors.textSecondary,
+  },
+
+  pressed: {
+    opacity: 0.75,
+  },
+});

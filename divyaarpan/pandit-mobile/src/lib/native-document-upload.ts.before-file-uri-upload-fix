@@ -1,0 +1,168 @@
+import { API_BASE_URL } from "./api";
+
+type NativeDocumentUploadOptions = {
+  sessionToken: string;
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  documentType: string;
+  documentNumber: string;
+};
+
+export async function uploadPanditDocumentNative({
+  sessionToken,
+  uri,
+  fileName,
+  mimeType,
+  documentType,
+  documentNumber,
+}: NativeDocumentUploadOptions) {
+  if (!sessionToken) {
+    throw new Error(
+      "Your session has expired. Please login again."
+    );
+  }
+
+  if (!uri) {
+    throw new Error(
+      `${documentType} file is missing. Please select it again.`
+    );
+  }
+
+  if (!documentNumber.trim()) {
+    throw new Error(
+      `Please enter the document number for ${documentType}.`
+    );
+  }
+
+  console.log("[KYC UPLOAD] preparing", {
+    documentType,
+    fileName,
+    mimeType,
+    uri,
+  });
+
+  const formData = new FormData();
+
+  /*
+   * React Native accepts a file descriptor object in FormData.
+   *
+   * IMPORTANT:
+   * Do not manually set Content-Type.
+   * React Native will add the multipart boundary automatically.
+   */
+  formData.append(
+    "file",
+    {
+      uri,
+      name: fileName,
+      type: mimeType,
+    } as any
+  );
+
+  formData.append(
+    "documentType",
+    documentType
+  );
+
+  formData.append(
+    "documentNumber",
+    documentNumber.trim()
+  );
+
+  console.log("[KYC UPLOAD] sending", {
+    documentType,
+    fileName,
+  });
+
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/api/pandit/documents/upload`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+        body: formData,
+      }
+    );
+  } catch (networkError) {
+    console.error(
+      "[KYC UPLOAD] network failure",
+      {
+        documentType,
+        networkError,
+      }
+    );
+
+    throw new Error(
+      `Unable to upload ${documentType}. Please check your internet connection and try again.`
+    );
+  }
+
+  let result: any = {};
+
+  try {
+    const responseText =
+      await response.text();
+
+    if (responseText) {
+      result = JSON.parse(responseText);
+    }
+  } catch (parseError) {
+    console.error(
+      "[KYC UPLOAD] invalid server response",
+      {
+        documentType,
+        status: response.status,
+        parseError,
+      }
+    );
+  }
+
+  if (!response.ok) {
+    console.error(
+      "[KYC UPLOAD] rejected",
+      {
+        documentType,
+        status: response.status,
+        message:
+          result?.message ||
+          result?.error ||
+          "Unknown server error",
+      }
+    );
+
+    throw new Error(
+      result?.message ||
+        result?.error ||
+        `Unable to upload ${documentType}.`
+    );
+  }
+
+  if (
+    !result?.success ||
+    !result?.documentId
+  ) {
+    console.error(
+      "[KYC UPLOAD] server did not confirm save",
+      {
+        documentType,
+        result,
+      }
+    );
+
+    throw new Error(
+      `${documentType} was uploaded but could not be confirmed. Please try again.`
+    );
+  }
+
+  console.log("[KYC UPLOAD] saved", {
+    documentType,
+    documentId: result.documentId,
+  });
+
+  return result;
+}

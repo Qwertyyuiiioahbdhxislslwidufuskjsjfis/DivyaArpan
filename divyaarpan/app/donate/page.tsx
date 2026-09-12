@@ -8,7 +8,7 @@ export default function Donate() {
         </h1>
 
         <p className="text-gray-600 mb-8">
-          Support temples and spiritual initiatives through DivyaArpan.
+          Support temples and spiritual initiatives through DivyaDarpan.
         </p>
 
         <div className="space-y-4">

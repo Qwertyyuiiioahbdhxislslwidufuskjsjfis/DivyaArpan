@@ -27,50 +27,80 @@ function SearchingPanditPageContent() {
   const [assignedPandit, setAssignedPandit] =
     useState<AssignedPandit | null>(null);
   const [noPanditAvailable, setNoPanditAvailable] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!bookingId) return;
+    useEffect(() => {
+      if (!bookingId) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(
-          `/api/pandit-bookings/${bookingId}/assigned`,
-          {
-            cache: "no-store",
-          }
-        );
+      let mounted = true;
+      let interval: ReturnType<typeof setInterval> | null = null;
 
-        const data = await response.json();
-
-        if (data.status === "NO_PANDIT_AVAILABLE") {
-          clearInterval(interval);
-          setNoPanditAvailable(true);
-          setStatus("No Pandit is currently available for this request.");
-          return;
-        }
-
-        if (data.assigned) {
-          setAssignedPandit(data.pandit);
-
-          setStatus(
-            `${data.pandit.name} accepted your booking`
+      async function checkBookingStatus() {
+        try {
+          const response = await fetch(
+            `/api/pandit-bookings/${bookingId}/assigned?t=${Date.now()}`,
+            {
+              cache: "no-store",
+              headers: {
+                "Cache-Control": "no-cache",
+              },
+            }
           );
 
-          clearInterval(interval);
+          const data = await response.json();
 
-          setTimeout(() => {
-            router.push(
-              `/book-my-pandit/payment?bookingId=${bookingId}`
+          console.log("BOOKING ASSIGNMENT CHECK:", data);
+
+          if (!mounted) return;
+
+          if (!response.ok) {
+            setError(data.message || "Unable to check the Pandit assignment.");
+            return;
+          }
+
+          setError("");
+
+          if (data.status === "NO_PANDIT_AVAILABLE") {
+            if (interval) clearInterval(interval);
+            setNoPanditAvailable(true);
+            setStatus("No Pandit is currently available for this request.");
+            return;
+          }
+
+          if (data.assigned && data.pandit) {
+            setAssignedPandit(data.pandit);
+            setStatus(
+              data.status === "AWAITING_PAYMENT"
+                ? `${data.pandit.name} accepted your booking`
+                : "Your Pandit has been assigned. DivyaArpan is confirming the final price."
             );
-          }, 3000);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }, 3000);
 
-    return () => clearInterval(interval);
-  }, [bookingId, router]);
+            if (data.status === "AWAITING_PAYMENT") {
+              if (interval) clearInterval(interval);
+              setTimeout(() => {
+                router.push(
+                  `/book-my-pandit/payment?bookingId=${encodeURIComponent(bookingId ?? "")}`
+                );
+              }, 1500);
+            }
+          }
+        } catch (error) {
+          console.error("BOOKING ASSIGNMENT CHECK FAILED:", error);
+          if (mounted) setError("Unable to check the Pandit assignment. Retrying...");
+        }
+      }
+
+      // Check immediately.
+      checkBookingStatus();
+
+      // Continue checking every 3 seconds.
+      interval = setInterval(checkBookingStatus, 3000);
+
+      return () => {
+        mounted = false;
+        if (interval) clearInterval(interval);
+      };
+    }, [bookingId, router]);
 
   return (
     <main className="min-h-screen bg-orange-50 flex items-center justify-center px-6">
@@ -123,6 +153,11 @@ function SearchingPanditPageContent() {
                 Please wait while nearby verified pandits
                 receive your booking request.
               </p>
+              {error && (
+                <p className="mt-4 text-sm font-medium text-red-700">
+                  {error}
+                </p>
+              )}
             </>
           ) : (
             <>
@@ -156,7 +191,7 @@ function SearchingPanditPageContent() {
                 </p>
 
                 <p className="mt-4 font-semibold text-green-700">
-                  Redirecting to payment...
+                  {status}
                 </p>
               </div>
             </>

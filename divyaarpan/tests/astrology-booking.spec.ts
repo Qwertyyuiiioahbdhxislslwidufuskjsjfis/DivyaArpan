@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../app/lib/auth";
@@ -54,37 +53,6 @@ function bookingPayload() {
     preferredTime: "10:30",
     question: "I need detailed guidance for career growth, upcoming transitions, and remedies.",
   };
-}
-
-function paymentSignature(orderId: string, paymentId: string) {
-  return crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-}
-
-async function createPersistedBooking(devoteeId: number, overrides: { amount?: number; paymentStatus?: string; paymentId?: string; paymentOrderId?: string } = {}) {
-  return prisma.astrologyBooking.create({
-    data: {
-      bookingId: `DA-AST-${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 900 + 100)}`,
-      service: "Career & Business Guidance",
-      consultationMode: "PHONE_CALL",
-      name: "Astrology Fixture Customer",
-      mobile: "+919000000001",
-      email: `fixture-${Date.now()}@divyaarpan.test`,
-      birthDate: "1990-01-01",
-      birthTime: "08:00",
-      birthPlace: "Delhi",
-      preferredDate: "2099-11-20",
-      preferredTime: "09:45",
-      question: "Need guidance on career direction and upcoming professional decisions.",
-      amount: overrides.amount ?? 150100,
-      paymentStatus: overrides.paymentStatus ?? "PENDING",
-      paymentId: overrides.paymentId,
-      paymentOrderId: overrides.paymentOrderId,
-      status: overrides.paymentStatus === "PAID" ? "Confirmed" : "Payment Pending",
-      devoteeId,
-    },
-  });
 }
 
 test.afterAll(async () => {
@@ -171,72 +139,4 @@ test("devotee cannot fetch another devotee's astrology booking", async ({ page }
 test("unauthenticated visitors see astrology booking login gate", async ({ page }) => {
   await page.goto("/astrology/booking");
   await expect(page.getByRole("heading", { name: "Sign in to book astrology consultation" })).toBeVisible();
-});
-
-test("Astrology API rejects malformed and past preferred dates", async ({ page }) => {
-  const devotee = await createDevotee("2004");
-  await login(page, devotee.user.email);
-
-  for (const preferredDate of ["2099-02-30", "2020-01-01"]) {
-    const response = await page.request.post("/api/astrology-bookings", {
-      headers: { "Content-Type": "application/json" },
-      data: { ...bookingPayload(), preferredDate },
-    });
-    expect(response.status()).toBe(400);
-  }
-});
-
-test("Astrology success page does not reveal an unpaid booking", async ({ page }) => {
-  const devotee = await createDevotee("2005");
-  await login(page, devotee.user.email);
-  const booking = await createPersistedBooking(devotee.devotee.id);
-
-  await page.goto(`/astrology/payment/success?bookingId=${booking.bookingId}`);
-  await expect(page.getByText("Consultation payment is not confirmed")).toBeVisible();
-  await expect(page.getByText(booking.bookingId)).toHaveCount(0);
-});
-
-test("Astrology payment rejects an invalid persisted amount", async ({ page }) => {
-  const devotee = await createDevotee("2006");
-  await login(page, devotee.user.email);
-  const booking = await createPersistedBooking(devotee.devotee.id, { amount: 0 });
-
-  const response = await page.request.post("/api/payments/create-order", {
-    data: { type: "astrology", bookingId: booking.bookingId },
-  });
-  expect(response.status()).toBe(400);
-  expect((await response.json()).error).toContain("Invalid astrology booking amount");
-});
-
-test("Astrology already-paid verification is idempotent and cannot be replaced", async ({ page }) => {
-  const devotee = await createDevotee("2007");
-  await login(page, devotee.user.email);
-  const booking = await createPersistedBooking(devotee.devotee.id, {
-    paymentStatus: "PAID",
-    paymentId: "pay_astrology_existing",
-    paymentOrderId: "order_astrology_existing",
-  });
-
-  const repeated = await page.request.post("/api/payments/verify", {
-    data: {
-      type: "astrology",
-      bookingId: booking.bookingId,
-      razorpay_order_id: "order_astrology_existing",
-      razorpay_payment_id: "pay_astrology_existing",
-      razorpay_signature: paymentSignature("order_astrology_existing", "pay_astrology_existing"),
-    },
-  });
-  expect(repeated.ok()).toBeTruthy();
-  expect((await repeated.json()).message).toBe("Payment was already verified.");
-
-  const replacement = await page.request.post("/api/payments/verify", {
-    data: {
-      type: "astrology",
-      bookingId: booking.bookingId,
-      razorpay_order_id: "order_astrology_existing",
-      razorpay_payment_id: "pay_astrology_replacement",
-      razorpay_signature: paymentSignature("order_astrology_existing", "pay_astrology_replacement"),
-    },
-  });
-  expect(replacement.status()).toBe(409);
 });

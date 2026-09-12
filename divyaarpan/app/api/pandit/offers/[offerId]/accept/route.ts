@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { requireRole } from "../../../../../lib/auth";
+import { getCurrentUserFromRequest } from "../../../../../lib/auth";
+import { addMobileCors } from "../../../../../lib/mobile-cors";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -9,6 +10,21 @@ const globalForPrisma = globalThis as unknown as {
 const prisma =
   globalForPrisma.prisma ??
   new PrismaClient();
+
+function mobileJson(
+  body: unknown,
+  init?: ResponseInit
+) {
+  return addMobileCors(
+    NextResponse.json(body, init)
+  );
+}
+
+export async function OPTIONS() {
+  return addMobileCors(
+    new NextResponse(null, { status: 204 })
+  );
+}
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
@@ -19,16 +35,16 @@ export async function POST(
   { params }: { params: Promise<{ offerId: string }> }
 ) {
   try {
-    const user = await requireRole("PANDIT");
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Pandit access required." }, { status: 403 });
+      return mobileJson({ success: false, message: "Pandit access required." }, { status: 403 });
     }
     const { offerId } = await params;
 
     const numericOfferId = Number(offerId);
 
     if (!numericOfferId || Number.isNaN(numericOfferId)) {
-      return NextResponse.json(
+      return mobileJson(
         {
           success: false,
           message: "Invalid offer ID.",
@@ -59,9 +75,23 @@ export async function POST(
         throw new Error("OFFER_NOT_OWNED");
       }
 
+      const panditProfile = await tx.pandit.findUnique({
+        where: { id: offer.panditId },
+        select: { verificationStatus: true, isActive: true },
+      });
+
+      if (!panditProfile || panditProfile.verificationStatus !== "VERIFIED" || !panditProfile.isActive) {
+        throw new Error("PANDIT_INACTIVE_OR_UNVERIFIED");
+      }
+
       // Offer must still be available
       if (offer.status !== "PENDING") {
         throw new Error("OFFER_ALREADY_PROCESSED");
+      }
+
+      const now = new Date();
+      if (offer.expiresAt && offer.expiresAt <= now) {
+        throw new Error("OFFER_EXPIRED");
       }
 
       // Another Pandit may already have accepted this booking
@@ -72,12 +102,31 @@ export async function POST(
         throw new Error("BOOKING_ALREADY_ASSIGNED");
       }
 
-      const now = new Date();
+      const bookingClaim = await tx.panditBooking.updateMany({
+        where: {
+          id: offer.bookingId,
+          panditId: null,
+          status: "SEARCHING",
+        },
+        data: {
+          panditId: offer.panditId,
+          panditName: offer.pandit.name,
+          amount: offer.offeredAmount,
+          status: "PANDIT_ASSIGNED",
+          assignedAt: now,
+        },
+      });
 
-      // Accept this offer
-      await tx.panditBookingOffer.update({
+      if (bookingClaim.count !== 1) {
+        throw new Error("BOOKING_ALREADY_ASSIGNED");
+      }
+
+      const acceptedOfferResult = await tx.panditBookingOffer.updateMany({
         where: {
           id: offer.id,
+          panditId: offer.panditId,
+          status: "PENDING",
+          expiresAt: { gt: now },
         },
         data: {
           status: "ACCEPTED",
@@ -85,18 +134,15 @@ export async function POST(
         },
       });
 
+      if (acceptedOfferResult.count !== 1) {
+        throw new Error("OFFER_ALREADY_PROCESSED");
+      }
+
       // Automatically assign the booking to this Pandit
-      const booking = await tx.panditBooking.update({
+      const booking = await tx.panditBooking.findUniqueOrThrow({
         where: {
           id: offer.bookingId,
         },
-        data: {
-  panditId: offer.panditId,
-  panditName: offer.pandit.name,
-  amount: offer.offeredAmount,
-  status: "PANDIT_ASSIGNED",
-  assignedAt: now,
-},
       });
       await tx.panditBookingStatusHistory.create({
         data: { bookingId: booking.id, fromStatus: offer.booking.status, toStatus: booking.status, actorRole: "PANDIT" },
@@ -136,7 +182,7 @@ export async function POST(
       };
     });
 
-    return NextResponse.json({
+    return mobileJson({
       success: true,
       message: "Booking accepted and Pandit assigned successfully.",
       booking: result.booking,
@@ -156,7 +202,7 @@ export async function POST(
 
     if (error instanceof Error) {
       if (error.message === "BOOKING_OFFER_NOT_FOUND") {
-        return NextResponse.json(
+        return mobileJson(
           {
             success: false,
             message: "Booking offer not found.",
@@ -168,14 +214,14 @@ export async function POST(
       }
 
       if (error.message === "OFFER_NOT_OWNED") {
-        return NextResponse.json(
+        return mobileJson(
           { success: false, message: "You cannot accept another Pandit's offer." },
           { status: 403 }
         );
       }
 
       if (error.message === "OFFER_ALREADY_PROCESSED") {
-        return NextResponse.json(
+        return mobileJson(
           {
             success: false,
             message: "This booking offer has already been processed.",
@@ -186,8 +232,32 @@ export async function POST(
         );
       }
 
+      if (error.message === "PANDIT_INACTIVE_OR_UNVERIFIED") {
+        return mobileJson(
+          {
+            success: false,
+            message: "Only verified active Pandits can accept offers.",
+          },
+          {
+            status: 403,
+          }
+        );
+      }
+
+      if (error.message === "OFFER_EXPIRED") {
+        return mobileJson(
+          {
+            success: false,
+            message: "This booking offer has expired.",
+          },
+          {
+            status: 409,
+          }
+        );
+      }
+
       if (error.message === "BOOKING_ALREADY_ASSIGNED") {
-        return NextResponse.json(
+        return mobileJson(
           {
             success: false,
             message: "This booking has already been assigned to another Pandit.",
@@ -199,7 +269,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json(
+    return mobileJson(
       {
         success: false,
         message: "Unable to accept booking.",

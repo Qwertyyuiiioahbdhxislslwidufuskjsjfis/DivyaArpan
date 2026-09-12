@@ -29,7 +29,7 @@ export default function BookMyPandit() {
             </h2>
 
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Whether it&apos;s a home pooja, temple ritual, wedding, griha pravesh or Satyanarayan Katha, DivyaArpan connects you with experienced and verified pandits across India.
+              Whether it&apos;s a home pooja, temple ritual, wedding, griha pravesh or Satyanarayan Katha, DivyaDarpan connects you with experienced and verified pandits across India.
             </p>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-2">

@@ -45,7 +45,7 @@ export default async function AdminTemplesPage() {
               </h1>
 
               <p className="mt-2 text-orange-100">
-                Add, edit and manage temples on DivyaArpan.
+                Add, edit and manage temples on DivyaDarpan.
               </p>
             </div>
 
@@ -78,7 +78,7 @@ export default async function AdminTemplesPage() {
             </p>
 
             <p className="mt-2 text-gray-500">
-              Add your first temple to DivyaArpan.
+              Add your first temple to DivyaDarpan.
             </p>
           </div>
         ) : (

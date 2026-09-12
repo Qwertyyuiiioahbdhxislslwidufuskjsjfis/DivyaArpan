@@ -93,7 +93,7 @@ function SuccessContent() {
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            We could not find this booking. Please return to DivyaArpan and
+            We could not find this booking. Please return to DivyaDarpan and
             try again.
           </p>
 
@@ -101,7 +101,7 @@ function SuccessContent() {
             href="/"
             className="mt-6 inline-flex rounded-xl bg-[#f45112] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#d9430b]"
           >
-            Back to DivyaArpan
+            Back to DivyaDarpan
           </Link>
         </div>
       </main>
@@ -118,7 +118,7 @@ function SuccessContent() {
         {/* BRAND */}
         <div className="text-center">
           <p className="font-serif text-3xl font-bold text-[#f45112]">
-            DivyaArpan
+            DivyaDarpan
           </p>
 
           <p className="mt-1 text-xs font-bold uppercase tracking-[0.28em] text-[#10264b]">
@@ -143,8 +143,8 @@ function SuccessContent() {
 
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-500 md:text-lg">
             {isPaid
-              ? "Thank you for choosing DivyaArpan. Your payment is confirmed and we will take care of the arrangements."
-              : "Thank you for choosing DivyaArpan. Your booking is recorded, but payment is still pending."}
+              ? "Thank you for choosing DivyaDarpan. Your payment is confirmed and we will take care of the arrangements."
+              : "Thank you for choosing DivyaDarpan. Your booking is recorded, but payment is still pending."}
           </p>
 
         </div>
@@ -269,10 +269,10 @@ function SuccessContent() {
 
                     <p className="mt-1 text-sm leading-6 text-slate-500">
                       {booking.poojaMode === "ON_BEHALF"
-                        ? "DivyaArpan will coordinate the Pooja, required Samagri and trusted Pandit arrangements for you."
+                        ? "DivyaDarpan will coordinate the Pooja, required Samagri and trusted Pandit arrangements for you."
                         : booking.poojaMode === "AT_HOME"
                           ? "A trusted Pandit will conduct the Pooja at your home with the required arrangements."
-                          : "You will be present at the temple. DivyaArpan will coordinate the required Pooja arrangements."}
+                          : "You will be present at the temple. DivyaDarpan will coordinate the required Pooja arrangements."}
                     </p>
                   </div>
                 </div>
@@ -382,7 +382,7 @@ function SuccessContent() {
           </p>
 
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            DivyaArpan will coordinate the required Pooja arrangements,
+            DivyaDarpan will coordinate the required Pooja arrangements,
             Samagri and trusted Pandit coordination for your selected Pooja.
           </p>
 
@@ -402,7 +402,7 @@ function SuccessContent() {
             href="/"
             className="flex-1 rounded-xl bg-[#f45112] px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:bg-[#d9430b]"
           >
-            Back to DivyaArpan
+            Back to DivyaDarpan
           </Link>
 
         </div>
@@ -415,7 +415,7 @@ function SuccessContent() {
           </p>
 
           <p className="mt-2 text-xs font-semibold text-[#f45112]">
-            DivyaArpan · Divine Services Platform
+            DivyaDarpan · Divine Services Platform
           </p>
 
         </div>

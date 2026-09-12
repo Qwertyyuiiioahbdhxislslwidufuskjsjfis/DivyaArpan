@@ -23,7 +23,11 @@ export type AuthUser = {
   devoteeId: number | null;
 };
 
-type UserRow = AuthUser & { passwordHash?: string };
+type UserRow = AuthUser & {
+  passwordHash?: string;
+  panditVerificationStatus?: string | null;
+  panditIsActive?: boolean | null;
+};
 
 export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -43,13 +47,46 @@ export async function verifyPassword(password: string, storedHash: string) {
 export async function findUserByEmail(email: string) {
   const rows = await prisma.$queryRaw<UserRow[]>`
     SELECT u.id, u.name, u.email, u.phone, u.role::text AS role,
-      u."passwordHash", p.id AS "panditId", d.id AS "devoteeId"
+      u."passwordHash",
+      p.id AS "panditId",
+      p."verificationStatus"::text AS "panditVerificationStatus",
+      p."isActive" AS "panditIsActive",
+      d.id AS "devoteeId"
     FROM "User" u
     LEFT JOIN "Pandit" p ON p."userId" = u.id
     LEFT JOIN "Devotee" d ON d."userId" = u.id
     WHERE LOWER(u.email) = LOWER(${email})
     LIMIT 1
   `;
+  return rows[0] ?? null;
+}
+
+export async function findUserByLogin(login: string) {
+  const trimmedLogin = login.trim();
+  const phoneDigits = trimmedLogin.replace(/\\D/g, "");
+
+  const rows = await prisma.$queryRaw<UserRow[]>`
+    SELECT u.id, u.name, u.email, u.phone, u.role::text AS role,
+      u."passwordHash",
+      p.id AS "panditId",
+      p."verificationStatus"::text AS "panditVerificationStatus",
+      p."isActive" AS "panditIsActive",
+      d.id AS "devoteeId"
+    FROM "User" u
+    LEFT JOIN "Pandit" p ON p."userId" = u.id
+    LEFT JOIN "Devotee" d ON d."userId" = u.id
+    WHERE
+      LOWER(u.email) = LOWER(${trimmedLogin})
+      OR (
+        ${phoneDigits} <> ''
+        AND (
+          REGEXP_REPLACE(COALESCE(u.phone, ''), '[^0-9]', '', 'g') = ${phoneDigits}
+          OR REGEXP_REPLACE(COALESCE(p.mobile, ''), '[^0-9]', '', 'g') = ${phoneDigits}
+        )
+      )
+    LIMIT 1
+  `;
+
   return rows[0] ?? null;
 }
 
@@ -63,9 +100,7 @@ export async function createSession(userId: number) {
   return { sessionId, expiresAt };
 }
 
-export async function getCurrentUser() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
+export async function getUserBySessionId(sessionId: string) {
   if (!sessionId) return null;
 
   const rows = await prisma.$queryRaw<AuthUser[]>`
@@ -78,7 +113,35 @@ export async function getCurrentUser() {
     WHERE s.id = ${sessionId} AND s."expiresAt" > NOW()
     LIMIT 1
   `;
+
   return rows[0] ?? null;
+}
+
+export async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
+
+  if (!sessionId) return null;
+
+  return getUserBySessionId(sessionId);
+}
+
+export async function getCurrentUserFromRequest(request: Request) {
+  const authorization = request.headers.get("authorization");
+
+  if (authorization) {
+    const [scheme, token] = authorization.trim().split(/\s+/, 2);
+
+    if (
+      scheme?.toLowerCase() === "bearer" &&
+      token
+    ) {
+      return getUserBySessionId(token);
+    }
+  }
+
+  // Keep existing website cookie authentication working.
+  return getCurrentUser();
 }
 
 export async function requireRole(...roles: AuthRole[]) {

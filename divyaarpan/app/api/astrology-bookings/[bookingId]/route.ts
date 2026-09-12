@@ -7,12 +7,8 @@ export async function GET(
   context: { params: Promise<{ bookingId: string }> }
 ) {
   try {
-    const { bookingId } = await context.params;
-
     const user = await getCurrentUser();
-    if (!user || (user.role !== "ADMIN" && (user.role !== "DEVOTEE" || !user.devoteeId))) {
-      return NextResponse.json({ success: false, error: "Authentication required." }, { status: 401 });
-    }
+    const { bookingId } = await context.params;
 
     const booking = await prisma.astrologyBooking.findUnique({
       where: { bookingId },
@@ -20,6 +16,10 @@ export async function GET(
 
     if (!booking) {
       return NextResponse.json({ success: false, error: "Astrology booking not found." }, { status: 404 });
+    }
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Authentication required." }, { status: 401 });
     }
 
     if (user.role === "DEVOTEE" && booking.devoteeId !== user.devoteeId) {

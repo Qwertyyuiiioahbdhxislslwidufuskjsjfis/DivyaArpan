@@ -1,0 +1,340 @@
+import { NextResponse } from "next/server";
+import {
+  createSession,
+  hashPassword,
+  SESSION_COOKIE,
+} from "../../../lib/auth";
+import { prisma } from "../../../../lib/prisma";
+
+function isEmail(value: string) {
+  return /^\S+@\S+\.\S+$/.test(value);
+}
+
+function isMobile(value: string) {
+  return /^\+?[0-9]{10,15}$/.test(value);
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    const name =
+      typeof body.name === "string"
+        ? body.name.trim()
+        : "";
+
+    const email =
+      typeof body.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
+
+    const mobile =
+      typeof body.mobile === "string"
+        ? body.mobile.trim()
+        : "";
+
+    const password =
+      typeof body.password === "string"
+        ? body.password
+        : "";
+
+    const city =
+      typeof body.city === "string"
+        ? body.city.trim()
+        : "";
+
+    const state =
+      typeof body.state === "string"
+        ? body.state.trim()
+        : "";
+
+    const languages: string[] = Array.isArray(body.languages)
+      ? Array.from(
+          new Set(
+            body.languages
+              .filter(
+                (value: unknown): value is string =>
+                  typeof value === "string"
+              )
+              .map((value: string) => value.trim())
+              .filter((value: string) => Boolean(value))
+          )
+        )
+      : [];
+
+    const services: string[] = Array.isArray(body.services)
+      ? Array.from(
+          new Set(
+            body.services
+              .filter(
+                (value: unknown): value is string =>
+                  typeof value === "string"
+              )
+              .map((value: string) => value.trim())
+              .filter((value: string) => Boolean(value))
+          )
+        )
+      : [];
+
+    if (name.length < 2 || name.length > 100) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Enter your full name.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!isEmail(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Enter a valid email address.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!isMobile(mobile)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Enter a valid mobile number.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Password must be at least 8 characters.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!city) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "City is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!state) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "State is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (languages.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Please select at least one language.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (services.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Please select at least one service.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const existingUser =
+      await prisma.user.findUnique({
+        where: { email },
+      });
+
+    if (existingUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "An account with this email already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const existingMobile =
+      await prisma.pandit.findUnique({
+        where: { mobile },
+      });
+
+    if (existingMobile) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "A Pandit account with this mobile number already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const existingPanditEmail =
+      await prisma.pandit.findUnique({
+        where: { email },
+      });
+
+    if (existingPanditEmail) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "A Pandit account with this email already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const latestPandit =
+      await prisma.pandit.findFirst({
+        orderBy: {
+          id: "desc",
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    const nextNumber =
+      (latestPandit?.id ?? 0) + 1;
+
+    const panditCode = `DA-PND-${String(
+      nextNumber
+    ).padStart(5, "0")}`;
+
+    const passwordHash =
+      await hashPassword(password);
+
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            name,
+            email,
+            phone: mobile,
+            passwordHash,
+            role: "PANDIT",
+          },
+        });
+
+        const pandit =
+          await tx.pandit.create({
+            data: {
+              panditCode,
+              userId: user.id,
+
+              name,
+              mobile,
+              email,
+
+              city,
+              state,
+              country: "India",
+
+              verificationStatus: "PENDING",
+
+              isActive: true,
+              isOnline: false,
+
+              acceptsImmediate: true,
+              acceptsScheduled: true,
+
+              languages: {
+                create: languages.map(
+                  (language) => ({
+                    language,
+                  })
+                ),
+              },
+
+              services: {
+                create: services.map(
+                  (serviceName) => ({
+                    serviceName,
+                    basePrice: null,
+                    durationMinutes: null,
+                    isActive: true,
+                  })
+                ),
+              },
+            },
+
+            select: {
+              id: true,
+              panditCode: true,
+              name: true,
+              email: true,
+              verificationStatus: true,
+            },
+          });
+
+        return { user, pandit };
+      }
+    );
+
+    const session = await createSession(
+      result.user.id
+    );
+
+    const response = NextResponse.json(
+      {
+        success: true,
+        message:
+          "Pandit account created successfully. Your profile is pending verification.",
+        pandit: result.pandit,
+      },
+      { status: 201 }
+    );
+
+    response.cookies.set(
+      SESSION_COOKIE,
+      session.sessionId,
+      {
+        httpOnly: true,
+        secure:
+          process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        expires: session.expiresAt,
+        path: "/",
+      }
+    );
+
+    return response;
+  } catch (error) {
+    console.error(
+      "PANDIT REGISTRATION ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Unable to create your Pandit account right now.",
+      },
+      { status: 500 }
+    );
+  }
+}

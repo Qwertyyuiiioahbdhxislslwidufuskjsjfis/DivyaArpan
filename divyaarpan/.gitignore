@@ -45,3 +45,11 @@ next-env.d.ts
 # Local database backups
 backups/
 *.dump
+
+# Android build artifacts
+*.apk
+*.aab
+
+# Pandit KYC / uploaded documents - NEVER COMMIT
+/public/uploads/pandits/
+/uploads/pandits/private/

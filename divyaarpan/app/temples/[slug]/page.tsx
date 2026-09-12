@@ -154,7 +154,7 @@ export default async function TemplePage({
                     size={17}
                     className="text-green-300"
                   />
-                  DivyaArpan Listing
+                  DivyaDarpan Listing
                 </div>
 
               </div>
@@ -430,7 +430,7 @@ export default async function TemplePage({
 
               <p className="mt-4 max-w-2xl leading-7 text-orange-100">
                 Select your ceremony, preferred language, location
-                and date through DivyaArpan&apos;s Book My Pandit service.
+                and date through DivyaDarpan&apos;s Book My Pandit service.
               </p>
 
             </div>

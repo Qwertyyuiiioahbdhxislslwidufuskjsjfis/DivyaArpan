@@ -1,0 +1,599 @@
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+
+export default function LoginScreen() {
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleLogin = async () => {
+    if (!loginId.trim() || !password) {
+      setError("Please enter your email ID or mobile number and password.");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "https://probable-engine-56gj6xwj4w437pg9-3000.app.github.dev/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            loginId: loginId.trim(),
+            password,
+            client: "PANDIT_MOBILE",
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (
+        response.status === 403 &&
+        result.pendingApproval === true &&
+        result.sessionToken
+      ) {
+        await SecureStore.setItemAsync(
+          "divyaarpan_pandit_session",
+          result.sessionToken
+        );
+
+        if (result.sessionExpiresAt) {
+          await SecureStore.setItemAsync(
+            "divyaarpan_pandit_session_expires_at",
+            result.sessionExpiresAt
+          );
+        }
+
+        await SecureStore.setItemAsync(
+          "divyaarpan_pandit_user",
+          JSON.stringify({
+            ...(result.user || {}),
+            verificationStatus: "PENDING",
+          })
+        );
+
+        router.replace("/verification-pending");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Unable to sign in."
+        );
+      }
+
+      if (result.user?.role !== "PANDIT") {
+        throw new Error(
+          "This login is only for authorized Pandit partners."
+        );
+      }
+
+      if (!result.sessionToken) {
+        throw new Error(
+          "Unable to create a secure mobile session. Please try again."
+        );
+      }
+
+      await SecureStore.setItemAsync(
+        "divyaarpan_pandit_session",
+        result.sessionToken
+      );
+
+      if (result.sessionExpiresAt) {
+        await SecureStore.setItemAsync(
+          "divyaarpan_pandit_session_expires_at",
+          result.sessionExpiresAt
+        );
+      }
+
+      await SecureStore.setItemAsync(
+        "divyaarpan_pandit_user",
+        JSON.stringify(result.user)
+      );
+
+      router.replace("/dashboard");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to sign in."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotLoginId = () => {
+    router.push("/forgot-login-id");
+  };
+
+  const handleForgotPassword = () => {
+    router.push("/forgot-password");
+  };
+
+  const handleBecomePandit = () => {
+    router.push("/register");
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.page}>
+            <View style={styles.logoCircle}>
+              <Text style={styles.logoText}>ॐ</Text>
+            </View>
+
+            <Text style={styles.brand}>DivyaArpan</Text>
+            <Text style={styles.portal}>PANDIT PORTAL</Text>
+
+            <View style={styles.loginCard}>
+              <View style={styles.welcomeBlock}>
+                <Text style={styles.title}>Welcome Back</Text>
+                <Text style={styles.subtitle}>
+                  Sign in to manage your bookings and services.
+                </Text>
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.label}>
+                  Email ID or Mobile Number
+                </Text>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.fieldIcon}>♙</Text>
+
+                  <TextInput
+                    value={loginId}
+                    onChangeText={setLoginId}
+                    placeholder="Enter email ID or mobile number"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.label}>Password</Text>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.lockIcon}>▣</Text>
+
+                  <TextInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#94A3B8"
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={styles.passwordInput}
+                  />
+
+                  <Pressable
+                    onPress={() =>
+                      setShowPassword((value) => !value)
+                    }
+                    hitSlop={10}
+                  >
+                    <Text style={styles.showText}>
+                      {showPassword ? "Hide" : "Show"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              <View style={styles.recoveryRow}>
+                <Pressable onPress={handleForgotLoginId}>
+                  <Text style={styles.link}>
+                    Forgot Login ID?
+                  </Text>
+                </Pressable>
+
+                <Pressable onPress={handleForgotPassword}>
+                  <Text style={styles.link}>
+                    Forgot Password?
+                  </Text>
+                </Pressable>
+              </View>
+
+              {error ? (
+                <View style={styles.messageBox}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+
+              <Pressable
+                disabled={loading}
+                onPress={handleLogin}
+                style={({ pressed }) => [
+                  styles.loginButton,
+                  pressed && styles.loginButtonPressed,
+                  loading && styles.loginButtonDisabled,
+                ]}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <View style={styles.loginButtonContent}>
+                    <Text style={styles.loginButtonText}>
+                      Login
+                    </Text>
+                    <Text style={styles.loginArrow}>→</Text>
+                  </View>
+                )}
+              </Pressable>
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <Pressable
+                onPress={handleBecomePandit}
+                style={({ pressed }) => [
+                  styles.becomeCard,
+                  pressed && styles.becomeCardPressed,
+                ]}
+              >
+                <View style={styles.becomeIconCircle}>
+                  <Text style={styles.becomeIcon}>♙+</Text>
+                </View>
+
+                <View style={styles.becomeTextBlock}>
+                  <Text style={styles.becomeTitle}>
+                    Become a Pandit
+                  </Text>
+                  <Text style={styles.becomeSubtitle}>
+                    Join DivyaArpan and start receiving bookings.
+                  </Text>
+                </View>
+
+                <Text style={styles.becomeArrow}>›</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                Authorized Pandit Partner Access
+              </Text>
+              <Text style={styles.version}>
+                DivyaArpan Partner App
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFDF8",
+  },
+
+  keyboardView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  page: {
+    width: "100%",
+    maxWidth: 700,
+    alignSelf: "center",
+    paddingHorizontal: 24,
+    paddingTop: 38,
+    paddingBottom: 28,
+  },
+
+  logoCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: "#FFF1D6",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+
+  logoText: {
+    fontSize: 40,
+    color: "#B56A00",
+  },
+
+  brand: {
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: "800",
+    textAlign: "center",
+    color: "#963509",
+    letterSpacing: 0.2,
+  },
+
+  portal: {
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 4,
+    textAlign: "center",
+    color: "#B56A00",
+  },
+
+  loginCard: {
+    marginTop: 48,
+    width: "100%",
+    alignSelf: "center",
+  },
+
+  welcomeBlock: {
+    marginBottom: 30,
+  },
+
+  title: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "800",
+    color: "#132238",
+  },
+
+  subtitle: {
+    marginTop: 8,
+    fontSize: 16,
+    lineHeight: 24,
+    color: "#64748B",
+  },
+
+  field: {
+    marginBottom: 22,
+  },
+
+  label: {
+    marginBottom: 9,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#17233B",
+  },
+
+  inputContainer: {
+    height: 64,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 13,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+  },
+
+  fieldIcon: {
+    width: 30,
+    fontSize: 24,
+    color: "#17233B",
+    marginRight: 9,
+  },
+
+  lockIcon: {
+    width: 30,
+    fontSize: 19,
+    color: "#17233B",
+    marginRight: 9,
+  },
+
+  input: {
+    flex: 1,
+    height: "100%",
+    fontSize: 16,
+    color: "#17233B",
+    outlineStyle: "none" as any,
+  },
+
+  passwordInput: {
+    flex: 1,
+    height: "100%",
+    fontSize: 16,
+    color: "#17233B",
+    outlineStyle: "none" as any,
+  },
+
+  showText: {
+    paddingLeft: 12,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#B56A00",
+  },
+
+  recoveryRow: {
+    marginTop: -4,
+    marginBottom: 26,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 14,
+  },
+
+  link: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#B56A00",
+    textDecorationLine: "underline",
+  },
+
+  messageBox: {
+    marginBottom: 18,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
+    borderRadius: 9,
+    backgroundColor: "#FFF4F2",
+  },
+
+  errorText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#C81E1E",
+    textAlign: "center",
+  },
+
+  loginButton: {
+    height: 64,
+    borderRadius: 13,
+    backgroundColor: "#B86B00",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  loginButtonPressed: {
+    opacity: 0.88,
+  },
+
+  loginButtonDisabled: {
+    opacity: 0.65,
+  },
+
+  loginButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  loginButtonText: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+
+  loginArrow: {
+    marginLeft: 15,
+    fontSize: 28,
+    lineHeight: 30,
+    color: "#FFFFFF",
+  },
+
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 30,
+  },
+
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#CBD5E1",
+  },
+
+  dividerText: {
+    marginHorizontal: 20,
+    fontSize: 15,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+
+  becomeCard: {
+    minHeight: 112,
+    borderWidth: 1.5,
+    borderColor: "#E7AE4B",
+    borderRadius: 14,
+    backgroundColor: "#FFFEFA",
+    paddingHorizontal: 19,
+    paddingVertical: 18,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  becomeCardPressed: {
+    backgroundColor: "#FFF9ED",
+  },
+
+  becomeIconCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#FFF1D6",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 17,
+  },
+
+  becomeIcon: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#B56A00",
+  },
+
+  becomeTextBlock: {
+    flex: 1,
+  },
+
+  becomeTitle: {
+    fontSize: 20,
+    lineHeight: 25,
+    fontWeight: "800",
+    color: "#132238",
+  },
+
+  becomeSubtitle: {
+    marginTop: 3,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#64748B",
+  },
+
+  becomeArrow: {
+    marginLeft: 12,
+    fontSize: 38,
+    lineHeight: 40,
+    color: "#B56A00",
+  },
+
+  footer: {
+    marginTop: 34,
+    alignItems: "center",
+  },
+
+  footerText: {
+    fontSize: 13,
+    color: "#7C8798",
+  },
+
+  version: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+});

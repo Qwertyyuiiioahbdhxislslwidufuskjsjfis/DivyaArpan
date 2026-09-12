@@ -1,0 +1,279 @@
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import { requireRole } from "../../../lib/auth";
+import { getCurrentUser } from "../../../lib/auth";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+
+type RouteContext = {
+  params: Promise<{
+    bookingId: string;
+  }>;
+};
+
+// GET - Fetch one Pandit booking
+export async function GET(
+  request: NextRequest,
+  context: RouteContext
+) {
+  try {
+    const { bookingId } = await context.params;
+
+    const booking = await prisma.panditBooking.findUnique({
+      where: {
+        bookingId,
+      },
+      include: { statusHistory: { orderBy: { createdAt: "desc" } } },
+    });
+
+    const user = await getCurrentUser();
+    if (user?.role === "DEVOTEE" && booking?.devoteeId !== user.devoteeId) {
+      return NextResponse.json(
+        { success: false, error: "Pandit booking not found." },
+        { status: 404 }
+      );
+    }
+
+    if (!booking) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Pandit booking not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      booking,
+    });
+  } catch (error) {
+    console.error("GET PANDIT BOOKING ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Unable to fetch pandit booking.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+// PUT - Update Pandit booking
+export async function PUT(
+  request: NextRequest,
+  context: RouteContext
+) {
+  try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
+    }
+    const { bookingId } = await context.params;
+
+    const body = await request.json();
+
+    const {
+      amount,
+      panditName,
+      status,
+    } = body;
+
+    const existingBooking =
+      await prisma.panditBooking.findUnique({
+        where: {
+          bookingId,
+        },
+      });
+
+    if (!existingBooking) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Pandit booking not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    /*
+      IMPORTANT:
+      We store money in paise.
+
+      Example:
+      Admin enters ₹2100
+      Database stores 210000
+    */
+
+    let amountInPaise: number | null =
+      existingBooking.amount;
+
+    if (
+      amount !== undefined &&
+      amount !== null &&
+      amount !== ""
+    ) {
+      const parsedAmount = Number(amount);
+
+      if (
+        Number.isNaN(parsedAmount) ||
+        parsedAmount <= 0
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Please enter a valid booking amount.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      amountInPaise = Math.round(parsedAmount * 100);
+    }
+
+    const cleanPanditName =
+      typeof panditName === "string"
+        ? panditName.trim()
+        : existingBooking.panditName;
+
+    /*
+      Validate booking status before sending it
+      to Prisma.
+    */
+
+    const validStatuses = [
+      "REQUESTED",
+      "SEARCHING",
+      "PANDIT_ASSIGNED",
+      "AWAITING_PAYMENT",
+      "CONFIRMED",
+      "PANDIT_ON_THE_WAY",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "NO_PANDIT_AVAILABLE",
+    ] as const;
+
+    const requestedStatus =
+      typeof status === "string"
+        ? status.trim()
+        : "";
+
+    const cleanStatus =
+      validStatuses.includes(
+        requestedStatus as (typeof validStatuses)[number]
+      )
+        ? (requestedStatus as (typeof validStatuses)[number])
+        : existingBooking.status;
+
+    const updatedBooking =
+      await prisma.panditBooking.update({
+        where: {
+          bookingId,
+        },
+
+        data: {
+          amount: amountInPaise,
+
+          panditName:
+            cleanPanditName || null,
+
+          status: cleanStatus,
+        },
+      });
+    if (existingBooking.status !== updatedBooking.status) {
+      await prisma.panditBookingStatusHistory.create({
+        data: { bookingId: updatedBooking.id, fromStatus: existingBooking.status, toStatus: updatedBooking.status, actorRole: "ADMIN" },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Pandit booking updated successfully.",
+      booking: updatedBooking,
+    });
+  } catch (error) {
+    console.error(
+      "UPDATE PANDIT BOOKING ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Unable to update pandit booking.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: RouteContext
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "DEVOTEE" || !user.devoteeId) {
+      return NextResponse.json({ success: false, error: "Devotee authentication required." }, { status: 401 });
+    }
+
+    const { bookingId } = await context.params;
+    const booking = await prisma.panditBooking.findUnique({ where: { bookingId } });
+    if (!booking || booking.devoteeId !== user.devoteeId) {
+      return NextResponse.json({ success: false, error: "Pandit booking not found." }, { status: 404 });
+    }
+    if (["COMPLETED", "CANCELLED", "IN_PROGRESS"].includes(booking.status)) {
+      return NextResponse.json({ success: false, error: "This booking can no longer be changed." }, { status: 409 });
+    }
+
+    const body = await request.json();
+    if (body.action === "cancel") {
+      const updated = await prisma.panditBooking.update({
+        where: { id: booking.id },
+        data: { status: "CANCELLED", cancelledAt: new Date() },
+      });
+      await prisma.panditBookingStatusHistory.create({
+        data: { bookingId: updated.id, fromStatus: booking.status, toStatus: updated.status, actorRole: "DEVOTEE" },
+      });
+      return NextResponse.json({ success: true, booking: updated });
+    }
+
+    const date = typeof body.date === "string" ? body.date.trim() : "";
+    const time = typeof body.time === "string" ? body.time.trim() : "";
+    const today = new Date().toISOString().slice(0, 10);
+    if (body.action !== "reschedule" || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today || !/^\d{1,2}:\d{2}(\s?[AP]M)?(\s*-\s*\d{1,2}:\d{2}(\s?[AP]M)?)?$/i.test(time)) {
+      return NextResponse.json({ success: false, error: "Choose a valid future date and time." }, { status: 400 });
+    }
+
+    const updated = await prisma.panditBooking.update({
+      where: { id: booking.id },
+      data: { date, time },
+    });
+    return NextResponse.json({ success: true, booking: updated });
+  } catch (error) {
+    console.error("UPDATE CUSTOMER PANDIT BOOKING ERROR:", error);
+    return NextResponse.json({ success: false, error: "Unable to update this booking." }, { status: 500 });
+  }
+}

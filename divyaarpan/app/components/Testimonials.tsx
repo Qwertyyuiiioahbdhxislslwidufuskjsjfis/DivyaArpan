@@ -4,8 +4,8 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   { id: 1, name: "Rajesh Sharma", city: "Mumbai", review: "The booking process was seamless. The pandit arrived on time, performed the pooja with complete devotion, and explained every ritual beautifully.", rating: 5 },
-  { id: 2, name: "Priya Iyer", city: "Bengaluru", review: "We booked Satyanarayan Pooja through DivyaArpan. Everything was well organized and the experience felt authentic and peaceful.", rating: 5 },
-  { id: 3, name: "Amit Patel", city: "Ahmedabad", review: "Finding a trusted pandit used to be difficult. DivyaArpan made the entire process simple and transparent.", rating: 5 },
+  { id: 2, name: "Priya Iyer", city: "Bengaluru", review: "We booked Satyanarayan Pooja through DivyaDarpan. Everything was well organized and the experience felt authentic and peaceful.", rating: 5 },
+  { id: 3, name: "Amit Patel", city: "Ahmedabad", review: "Finding a trusted pandit used to be difficult. DivyaDarpan made the entire process simple and transparent.", rating: 5 },
 ];
 
 export default function Testimonials() {

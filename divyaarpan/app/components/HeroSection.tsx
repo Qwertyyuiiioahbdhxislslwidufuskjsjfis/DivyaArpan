@@ -10,7 +10,7 @@ export default function HeroSection() {
       <div className="relative h-[635px] w-full overflow-hidden bg-[#fff8ed]">
         <Image
           src="/images/hero/hero-temple.jpg"
-          alt="DivyaArpan Temple"
+          alt="DivyaDarpan Temple"
           width={1400}
           height={635}
           priority

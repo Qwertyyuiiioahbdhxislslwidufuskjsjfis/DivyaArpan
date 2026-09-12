@@ -1,0 +1,37 @@
+export const REQUIRED_PANDIT_DOCUMENT_TYPES = [
+  "GOVERNMENT_ID",
+  "PAN_CARD",
+  "ADDRESS_PROOF",
+  "POLICE_VERIFICATION",
+  "QUALIFICATION_CERTIFICATE",
+] as const;
+
+const DOCUMENT_TYPE_ALIASES: Record<string, string> = {
+  "government photo id": "GOVERNMENT_ID",
+  "government id": "GOVERNMENT_ID",
+  government_id: "GOVERNMENT_ID",
+  "pan card": "PAN_CARD",
+  pan_card: "PAN_CARD",
+  "address proof": "ADDRESS_PROOF",
+  address_proof: "ADDRESS_PROOF",
+  "police verification": "POLICE_VERIFICATION",
+  police_verification: "POLICE_VERIFICATION",
+  "pooja / vedic qualification certificate": "QUALIFICATION_CERTIFICATE",
+  "pooja vedic qualification certificate": "QUALIFICATION_CERTIFICATE",
+  qualification_certificate: "QUALIFICATION_CERTIFICATE",
+  "temple / guru / organisation reference": "REFERENCE_PROOF",
+  reference_proof: "REFERENCE_PROOF",
+  "divyadarpan pandit partner agreement": "PARTNER_AGREEMENT",
+  partner_agreement: "PARTNER_AGREEMENT",
+};
+
+export function normalizePanditDocumentType(value: unknown) {
+  if (typeof value !== "string") return null;
+
+  const normalizedKey = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s/-]+/g, " ");
+
+  return DOCUMENT_TYPE_ALIASES[normalizedKey] ?? null;
+}

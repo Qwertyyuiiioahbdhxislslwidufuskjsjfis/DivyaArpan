@@ -201,15 +201,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "astrology") {
-      if (!user || user.role !== "DEVOTEE" || !user.devoteeId) {
-        return NextResponse.json(
-          { success: false, error: "Devotee authentication required." },
-          { status: 401 }
-        );
-      }
-
       const astrologyBooking = await prisma.astrologyBooking.findFirst({
-        where: { bookingId, devoteeId: user.devoteeId },
+        where: { bookingId, ...ownerFilter },
       });
 
       if (!astrologyBooking) {
@@ -251,27 +244,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { success: false, error: "Payment verification failed." },
           { status: 400 }
-        );
-      }
-
-      if (astrologyBooking.paymentStatus === "PAID") {
-        if (astrologyBooking.paymentId === razorpay_payment_id) {
-          return NextResponse.json({
-            success: true,
-            message: "Payment was already verified.",
-            booking: {
-              bookingId: astrologyBooking.bookingId,
-              status: astrologyBooking.status,
-              paymentStatus: astrologyBooking.paymentStatus,
-              paymentId: astrologyBooking.paymentId,
-              paymentOrderId: astrologyBooking.paymentOrderId,
-            },
-          });
-        }
-
-        return NextResponse.json(
-          { success: false, error: "This consultation has already been paid." },
-          { status: 409 }
         );
       }
 

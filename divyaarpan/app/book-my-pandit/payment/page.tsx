@@ -28,6 +28,7 @@ type PanditBooking = {
   date: string;
   time: string;
   sankalp: string | null;
+  samagriRequired: boolean;
   devoteeName: string;
   mobile: string;
   email: string | null;
@@ -204,6 +205,16 @@ function PanditPaymentPageContent() {
     void Promise.resolve().then(fetchBooking);
   }, [bookingId]);
 
+  function recordFailedPayment() {
+    if (!booking) return;
+    void fetch("/api/payments/failed", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId: booking.bookingId }),
+      keepalive: true,
+    });
+  }
+
   async function handlePayment() {
     if (!booking?.amount) {
       setError(
@@ -260,7 +271,7 @@ function PanditPaymentPageContent() {
 
         currency: data.order.currency,
 
-        name: "DivyaArpan",
+        name: "DivyaDarpan",
 
         description: booking.service,
 
@@ -335,6 +346,7 @@ function PanditPaymentPageContent() {
         modal: {
           ondismiss: function () {
             setPaymentLoading(false);
+            recordFailedPayment();
 
             window.location.href =
               `/book-my-pandit/payment/failed?bookingId=${encodeURIComponent(
@@ -355,6 +367,7 @@ function PanditPaymentPageContent() {
         "payment.failed",
         function () {
           setPaymentLoading(false);
+          recordFailedPayment();
 
           window.location.href =
             `/book-my-pandit/payment/failed?bookingId=${encodeURIComponent(
@@ -484,7 +497,7 @@ function PanditPaymentPageContent() {
           </Link>
 
           <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-orange-100">
-            DivyaArpan Secure Checkout
+            DivyaDarpan Secure Checkout
           </p>
 
           <h1 className="mt-2 text-4xl font-bold md:text-5xl">
@@ -602,7 +615,7 @@ function PanditPaymentPageContent() {
                   <ul className="mt-4 space-y-2 text-gray-700">
 
                     <li>
-                      ✔ Verified by DivyaArpan
+                      ✔ Verified by DivyaDarpan
                     </li>
 
                     <li>
@@ -675,6 +688,12 @@ function PanditPaymentPageContent() {
                   value={booking.address}
                 />
 
+                <InfoCard
+                  icon={<ShieldCheck size={20} />}
+                  label="Pooja Samagri"
+                  value={booking.samagriRequired ? "Required" : "Not required"}
+                />
+
               </div>
 
             </div>
@@ -711,7 +730,7 @@ function PanditPaymentPageContent() {
               <div>
 
                 <h3 className="font-bold text-gray-900">
-                  Secure DivyaArpan Booking
+                  Secure DivyaDarpan Booking
                 </h3>
 
                 <p className="mt-2 leading-6 text-gray-600">

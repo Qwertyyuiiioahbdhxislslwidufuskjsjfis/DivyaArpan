@@ -1,0 +1,83 @@
+import * as FileSystem from "expo-file-system/legacy";
+
+import { API_BASE_URL } from "./api";
+
+type NativeDocumentUploadOptions = {
+  sessionToken: string;
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  documentType: string;
+  documentNumber: string;
+};
+
+export async function uploadPanditDocumentNative({
+  sessionToken,
+  uri,
+  fileName,
+  mimeType,
+  documentType,
+  documentNumber,
+}: NativeDocumentUploadOptions) {
+  /*
+   * Do not use React Native FormData here.
+   *
+   * RN / Expo Android multipart implementations can reject
+   * DocumentPicker URIs with "Unsupported FormDataPart".
+   *
+   * Read the selected cached file as Base64 and let our
+   * authenticated backend persist it.
+   */
+  const fileBase64 =
+    await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+  if (!fileBase64) {
+    throw new Error(
+      `Unable to read ${documentType}.`
+    );
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/pandit/documents/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        documentType,
+        documentNumber,
+        fileName,
+        mimeType,
+        fileBase64,
+      }),
+    }
+  );
+
+  let result: any = {};
+
+  try {
+    result = await response.json();
+  } catch {
+    result = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ||
+        result.error ||
+        `Unable to upload ${documentType}.`
+    );
+  }
+
+  if (!result.success || !result.documentId) {
+    throw new Error(
+      `${documentType} was not saved correctly. Please try again.`
+    );
+  }
+
+  return result;
+}

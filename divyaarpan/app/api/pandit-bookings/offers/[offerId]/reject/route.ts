@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { requireRole } from "../../../../../lib/auth";
+import { getCurrentUserFromRequest } from "../../../../../lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -9,9 +9,27 @@ export async function POST(
   { params }: { params: Promise<{ offerId: string }> }
 ) {
   try {
-    if (!(await requireRole("ADMIN"))) {
-      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+    const user = await getCurrentUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, message: "Pandit access required." }, { status: 403 });
     }
+
+    if (!user.panditId) {
+      return NextResponse.json({ success: false, message: "Pandit account required." }, { status: 403 });
+    }
+
+    const pandit = await prisma.pandit.findUnique({
+      where: { id: user.panditId },
+      select: { verificationStatus: true, isActive: true },
+    });
+
+    if (!pandit || pandit.verificationStatus !== "VERIFIED" || !pandit.isActive) {
+      return NextResponse.json(
+        { success: false, message: "Only verified active Pandits can reject offers." },
+        { status: 403 }
+      );
+    }
+
     const { offerId } = await params;
 
     const offerIdNumber = Number(offerId);
@@ -20,6 +38,21 @@ export async function POST(
       return NextResponse.json(
         {
           message: "Invalid offer id.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const payload = await request.json().catch(() => ({}));
+    const reason = typeof payload.reason === "string" ? payload.reason.trim() : "";
+
+    if (!reason) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "A rejection reason is required.",
         },
         {
           status: 400,
@@ -42,8 +75,16 @@ export async function POST(
         throw new Error("OFFER_NOT_FOUND");
       }
 
+      if (offer.panditId !== user.panditId) {
+        throw new Error("OFFER_NOT_OWNED");
+      }
+
       if (offer.status !== "PENDING") {
         throw new Error("OFFER_ALREADY_PROCESSED");
+      }
+
+      if (offer.expiresAt && offer.expiresAt <= new Date()) {
+        throw new Error("OFFER_EXPIRED");
       }
 
       await tx.panditBookingOffer.update({
@@ -53,6 +94,7 @@ export async function POST(
         data: {
           status: "DECLINED",
           respondedAt: new Date(),
+          rejectionReason: reason,
         },
       });
 
@@ -73,7 +115,7 @@ export async function POST(
           },
         });
         await tx.panditBookingStatusHistory.create({
-          data: { bookingId: updatedBooking.id, fromStatus: "SEARCHING", toStatus: updatedBooking.status, actorRole: "ADMIN" },
+          data: { bookingId: updatedBooking.id, fromStatus: "SEARCHING", toStatus: updatedBooking.status, actorRole: "PANDIT" },
         });
       }
 
@@ -113,10 +155,30 @@ export async function POST(
           }
         );
 
+      case "OFFER_NOT_OWNED":
+        return NextResponse.json(
+          {
+            message: "You cannot reject another Pandit's offer.",
+          },
+          {
+            status: 403,
+          }
+        );
+
       case "OFFER_ALREADY_PROCESSED":
         return NextResponse.json(
           {
             message: "Offer has already been processed.",
+          },
+          {
+            status: 409,
+          }
+        );
+
+      case "OFFER_EXPIRED":
+        return NextResponse.json(
+          {
+            message: "This offer has expired.",
           },
           {
             status: 409,

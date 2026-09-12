@@ -31,6 +31,10 @@ const language = searchParams.get("language") || "";
 const date = searchParams.get("date") || "";
 const time = searchParams.get("time") || "";
 const sankalp = searchParams.get("sankalp") || "";
+const bookingType =
+  searchParams.get("bookingType") === "IMMEDIATE" ? "IMMEDIATE" : "SCHEDULED";
+const urgency =
+  searchParams.get("urgency") === "ASAP" ? "ASAP" : "SCHEDULED";
 
 const devoteeName = searchParams.get("devoteeName") || "";
 const mobile = searchParams.get("mobile") || "";
@@ -67,6 +71,10 @@ const additionalRequirements =
   date,
   time,
   sankalp,
+  state: "",
+  pincode: pinCode,
+  bookingType,
+  urgency,
 
   devoteeName,
   mobile,
@@ -561,7 +569,7 @@ const additionalRequirements =
         label="Pooja Samagri"
         value={
           samagriRequired
-            ? "Required from DivyaArpan"
+            ? "Required from DivyaDarpan"
             : "Already Available"
         }
       />
@@ -595,7 +603,7 @@ const additionalRequirements =
               <div>
 
                 <h3 className="font-bold text-slate-900">
-                  DivyaArpan Booking Coordination
+                  DivyaDarpan Booking Coordination
                 </h3>
 
                 <p className="mt-2 leading-7 text-slate-600">
@@ -667,65 +675,17 @@ const additionalRequirements =
 
                 <div className="my-6 border-t border-slate-100" />
 
-                {/* AMOUNT */}
-
                 <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6">
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Final Price Confirmation
+                  </h3>
 
-  <h3 className="text-lg font-bold text-slate-900">
-    Estimated Charges
-  </h3>
-
-  <div className="mt-5 space-y-3">
-
-    <SummaryRow
-      label="Pandit Dakshina"
-      value="₹2,100"
-    />
-
-    <SummaryRow
-      label="Travel Charges"
-      value="₹300"
-    />
-
-    <SummaryRow
-      label="Samagri"
-      value={
-        samagriRequired ? "₹800" : "₹0"
-      }
-    />
-
-    <SummaryRow
-      label="Platform Fee"
-      value="₹100"
-    />
-
-    <SummaryRow
-      label="GST"
-      value="₹126"
-    />
-
-  </div>
-
-  <div className="my-5 border-t border-orange-200" />
-
-  <div className="flex items-center justify-between">
-
-    <span className="text-lg font-bold">
-      Estimated Total
-    </span>
-
-    <span className="text-2xl font-extrabold text-orange-700">
-      ₹3,426
-    </span>
-
-  </div>
-
-  <p className="mt-4 text-xs leading-5 text-slate-500">
-    This is an estimated amount. The final amount may vary depending on
-    the selected pooja, location, and service requirements.
-  </p>
-
-</div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    DivyaArpan will confirm the final amount after a verified
+                    Pandit accepts your request. Payment is available only for
+                    that confirmed amount.
+                  </p>
+                </div>
 
                 {/* ERROR */}
 
@@ -772,7 +732,7 @@ const additionalRequirements =
 
                   <ShieldCheck size={15} />
 
-                  Secure booking with DivyaArpan
+                  Secure booking with DivyaDarpan
 
                 </div>
 

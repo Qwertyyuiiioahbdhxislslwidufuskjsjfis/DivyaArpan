@@ -247,7 +247,7 @@ const saveBooking = async () => {
       <main className="flex min-h-screen items-center justify-center bg-[#fff9f3] px-6">
         <div className="text-center" role="alert">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl text-red-600">!</div>
-          <p className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">DivyaArpan</p>
+          <p className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">DivyaDarpan</p>
           <h1 className="mt-3 font-serif text-3xl font-bold text-[#10264b]">Pooja booking is unavailable</h1>
           <p className="mt-2 text-slate-500">{loadError}</p>
           <Link href="/temples" className="mt-6 inline-flex rounded-xl bg-[#f45112] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#d9430b]">Browse Temples</Link>
@@ -263,7 +263,7 @@ const saveBooking = async () => {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-3xl">
             🪷
           </div>
-          <p className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">DivyaArpan</p>
+          <p className="mt-5 text-sm font-bold uppercase tracking-[0.22em] text-[#f45112]">DivyaDarpan</p>
           <h1 className="mt-3 font-serif text-3xl font-bold text-[#10264b]">Loading Your Pooja Options</h1>
           <p className="mt-2 text-slate-500">Please wait while we load available temples and poojas.</p>
         </div>
@@ -285,7 +285,7 @@ const saveBooking = async () => {
 
             <div className="text-left">
               <p className="font-serif text-2xl font-bold leading-none text-[#f45112]">
-                DivyaArpan
+                DivyaDarpan
               </p>
               <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Pooja Services
@@ -670,7 +670,7 @@ const saveBooking = async () => {
                   </p>
 
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                    DivyaArpan coordinates the required Samagri, Pooja arrangements
+                    DivyaDarpan coordinates the required Samagri, Pooja arrangements
                     and trusted Pandit coordination for your selected Pooja.
                   </p>
                 </div>

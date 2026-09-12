@@ -1,0 +1,521 @@
+import { NextResponse } from "next/server";
+import { addMobileCors } from "../../../lib/mobile-cors";
+import {
+  createSession,
+  hashPassword,
+  SESSION_COOKIE,
+} from "../../../lib/auth";
+import { prisma } from "../../../../lib/prisma";
+import { normalizePanditDocumentType } from "@/app/lib/pandit-documents";
+
+function mobileJson(
+  body: unknown,
+  init?: ResponseInit
+) {
+  return addMobileCors(
+    NextResponse.json(body, init)
+  );
+}
+
+export async function OPTIONS() {
+  return addMobileCors(
+    new NextResponse(null, { status: 204 })
+  );
+}
+
+function isEmail(value: string) {
+  return /^\S+@\S+\.\S+$/.test(value);
+}
+
+function isMobile(value: string) {
+  return /^\+?[0-9]{10,15}$/.test(value);
+}
+
+function optionalNumber(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    const isPanditMobile =
+      body.client === "PANDIT_MOBILE";
+
+    const name =
+      typeof body.name === "string"
+        ? body.name.trim()
+        : "";
+
+    const email =
+      typeof body.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
+
+    const mobile =
+      typeof body.mobile === "string"
+        ? body.mobile.trim()
+        : "";
+
+    const password =
+      typeof body.password === "string"
+        ? body.password
+        : "";
+
+    const city =
+      typeof body.city === "string"
+        ? body.city.trim()
+        : "";
+
+    const state =
+      typeof body.state === "string"
+        ? body.state.trim()
+        : "";
+
+    const country =
+      typeof body.country === "string" && body.country.trim()
+        ? body.country.trim()
+        : "India";
+
+    const address =
+      typeof body.address === "string"
+        ? body.address.trim()
+        : "";
+
+    const pincode =
+      typeof body.pincode === "string"
+        ? body.pincode.trim()
+        : "";
+
+    const gender =
+      typeof body.gender === "string"
+        ? body.gender.trim()
+        : "";
+
+    const dateOfBirth =
+      typeof body.dateOfBirth === "string" && body.dateOfBirth
+        ? new Date(body.dateOfBirth)
+        : null;
+
+    const experienceYears = optionalNumber(body.experienceYears);
+
+    const bio =
+      typeof body.bio === "string"
+        ? body.bio.trim()
+        : "";
+
+    const latitude = optionalNumber(body.latitude);
+    const longitude = optionalNumber(body.longitude);
+
+    const acceptsImmediate =
+      body.acceptsImmediate === undefined
+        ? true
+        : Boolean(body.acceptsImmediate);
+
+    const acceptsScheduled =
+      body.acceptsScheduled === undefined
+        ? true
+        : Boolean(body.acceptsScheduled);
+
+    const serviceAreas = Array.isArray(body.serviceAreas)
+      ? body.serviceAreas
+          .filter(
+            (area: unknown): area is Record<string, unknown> =>
+              typeof area === "object" &&
+              area !== null
+          )
+          .map((area: { city: string; area: string; pincode?: string; latitude?: unknown; longitude?: unknown; serviceRadiusKm?: unknown }) => ({
+            city:
+              typeof area.city === "string"
+                ? area.city.trim()
+                : "",
+            area:
+              typeof area.area === "string"
+                ? area.area.trim()
+                : "",
+            pincode:
+              typeof area.pincode === "string"
+                ? area.pincode.trim()
+                : "",
+            latitude: optionalNumber(area.latitude),
+            longitude: optionalNumber(area.longitude),
+            serviceRadiusKm: optionalNumber(area.serviceRadiusKm),
+          }))
+          .filter((area: { city: string; area: string; pincode: string; latitude: number | null; longitude: number | null; serviceRadiusKm: number | null }) => area.city && area.area)
+      : [];
+
+      const documents = Array.isArray(body.documents)
+        ? body.documents
+            .filter(
+              (document: unknown): document is Record<string, unknown> =>
+                typeof document === "object" &&
+                document !== null
+            )
+            .map(
+              (document: {
+                documentType?: string;
+                documentUrl?: string;
+                documentNumber?: string;
+              }) => {
+                return {
+                  documentType: normalizePanditDocumentType(document.documentType) || "",
+                  documentUrl:
+                    typeof document.documentUrl === "string"
+                      ? document.documentUrl.trim()
+                      : "",
+                  documentNumber:
+                    typeof document.documentNumber === "string"
+                      ? document.documentNumber.trim()
+                      : "",
+                };
+              }
+            )
+            .filter(
+              (document: {
+                documentType: string;
+                documentUrl: string;
+                documentNumber: string;
+              }) => document.documentType && document.documentUrl
+            )
+        : [];
+
+    const languages: string[] = Array.isArray(body.languages)
+      ? Array.from(
+          new Set(
+            body.languages
+              .filter(
+                (value: unknown): value is string =>
+                  typeof value === "string"
+              )
+              .map((value: string) => value.trim())
+              .filter((value: string) => Boolean(value))
+          )
+        )
+      : [];
+
+    const services: string[] = Array.isArray(body.services)
+      ? Array.from(
+          new Set(
+            body.services
+              .filter(
+                (value: unknown): value is string =>
+                  typeof value === "string"
+              )
+              .map((value: string) => value.trim())
+              .filter((value: string) => Boolean(value))
+          )
+        )
+      : [];
+
+    if (name.length < 2 || name.length > 100) {
+      return mobileJson(
+        {
+          success: false,
+          error: "Enter your full name.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!isEmail(email)) {
+      return mobileJson(
+        {
+          success: false,
+          error: "Enter a valid email address.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!isMobile(mobile)) {
+      return mobileJson(
+        {
+          success: false,
+          error: "Enter a valid mobile number.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return mobileJson(
+        {
+          success: false,
+          error:
+            "Password must be at least 8 characters.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!city) {
+      return mobileJson(
+        {
+          success: false,
+          error: "City is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!state) {
+      return mobileJson(
+        {
+          success: false,
+          error: "State is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!address || !/^\d{6}$/.test(pincode)) {
+      return mobileJson(
+        { success: false, error: "A full address and valid 6-digit pincode are required." },
+        { status: 400 }
+      );
+    }
+
+    if (languages.length === 0) {
+      return mobileJson(
+        {
+          success: false,
+          error:
+            "Please select at least one language.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (services.length === 0) {
+      return mobileJson(
+        {
+          success: false,
+          error:
+            "Please select at least one service.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (serviceAreas.length === 0) {
+      return mobileJson(
+        { success: false, error: "Please add at least one service area." },
+        { status: 400 }
+      );
+    }
+
+    const existingUser =
+      await prisma.user.findUnique({
+        where: { email },
+      });
+
+    if (existingUser) {
+      return mobileJson(
+        {
+          success: false,
+          error:
+            "An account with this email already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const existingMobile =
+      await prisma.pandit.findUnique({
+        where: { mobile },
+      });
+
+    if (existingMobile) {
+      return mobileJson(
+        {
+          success: false,
+          error:
+            "A Pandit account with this mobile number already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const existingPanditEmail =
+      await prisma.pandit.findUnique({
+        where: { email },
+      });
+
+    if (existingPanditEmail) {
+      return mobileJson(
+        {
+          success: false,
+          error:
+            "A Pandit account with this email already exists.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const latestPandit =
+      await prisma.pandit.findFirst({
+        orderBy: {
+          id: "desc",
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    const nextNumber =
+      (latestPandit?.id ?? 0) + 1;
+
+    const panditCode = `DA-PND-${String(
+      nextNumber
+    ).padStart(5, "0")}`;
+
+    const passwordHash =
+      await hashPassword(password);
+
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            name,
+            email,
+            phone: mobile,
+            passwordHash,
+            role: "PANDIT",
+          },
+        });
+
+        const pandit =
+          await tx.pandit.create({
+            data: {
+              panditCode,
+              userId: user.id,
+
+              name,
+              mobile,
+              email,
+
+              city,
+              state,
+              country,
+              address: address || null,
+              pincode: pincode || null,
+              gender: gender || null,
+              dateOfBirth:
+                dateOfBirth && !Number.isNaN(dateOfBirth.getTime())
+                  ? dateOfBirth
+                  : null,
+              experienceYears:
+                experienceYears !== null
+                  ? Math.max(0, Math.floor(experienceYears))
+                  : 0,
+              bio: bio || null,
+              latitude,
+              longitude,
+
+              verificationStatus: "PENDING",
+
+              isActive: true,
+              isOnline: false,
+
+              acceptsImmediate,
+              acceptsScheduled,
+
+              languages: {
+                create: languages.map(
+                  (language) => ({
+                    language,
+                  })
+                ),
+              },
+
+              services: {
+                create: services.map(
+                  (serviceName) => ({
+                    serviceName,
+                    basePrice: null,
+                    durationMinutes: null,
+                    isActive: true,
+                  })
+                ),
+              },
+
+              serviceAreas:
+                serviceAreas.length > 0
+                  ? {
+                      create: serviceAreas,
+                    }
+                  : undefined,
+
+              documents:
+                documents.length > 0
+                  ? {
+                      create: documents.map((document: { documentType?: string; documentUrl?: string; documentNumber?: string }) => ({
+                        documentType: document.documentType,
+                        documentUrl: document.documentUrl,
+                        documentNumber:
+                          document.documentNumber || null,
+                        isVerified: false,
+                      })),
+                    }
+                  : undefined,
+            },
+
+            select: {
+              id: true,
+              panditCode: true,
+              name: true,
+              email: true,
+              verificationStatus: true,
+            },
+          });
+
+        return { user, pandit };
+      }
+    );
+
+    const session = await createSession(result.user.id);
+    const response = mobileJson(
+      {
+        success: true,
+        message:
+          "Pandit account created successfully. Your profile is pending Admin verification.",
+        pandit: result.pandit,
+        ...(isPanditMobile
+          ? {
+              sessionToken: session.sessionId,
+              sessionExpiresAt:
+                session.expiresAt.toISOString(),
+            }
+          : {}),
+      },
+      { status: 201 }
+    );
+    response.cookies.set(SESSION_COOKIE, session.sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: session.expiresAt,
+      path: "/",
+    });
+    return response;
+  } catch (error) {
+    console.error(
+      "PANDIT REGISTRATION ERROR:",
+      error
+    );
+
+    return mobileJson(
+      {
+        success: false,
+        error:
+          "Unable to create your Pandit account right now.",
+      },
+      { status: 500 }
+    );
+  }
+}

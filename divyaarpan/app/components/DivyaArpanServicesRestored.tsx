@@ -51,20 +51,20 @@ const services = [
 
 const bookingOptions = [
   {
-    title: "Mandir Mein Pooja",
-    description: "Visit the temple and let DivyaArpan arrange the sanctified Pooja for you.",
+    title: "Temple Pooja",
+    description: "Have your Pooja performed at the temple with authentic devotional arrangements.",
     href: "/booking?mode=DEVOTEE_PRESENT",
     icon: Building2,
   },
   {
-    title: "Ghar Se Pooja",
-    description: "Have the ritual conducted with devotion from the comfort of your home.",
+    title: "Pooja From Home",
+    description: "Offer your devotion remotely without needing to visit the temple yourself.",
     href: "/booking?mode=ON_BEHALF",
     icon: House,
   },
   {
-    title: "Ghar Mein Pooja",
-    description: "Book a home Pooja for your family with trusted guidance and arrangements.",
+    title: "Pandit at Home",
+    description: "Book a verified Pandit for a Pooja or ceremony at your home.",
     href: "/booking?mode=AT_HOME",
     icon: Sparkles,
   },
@@ -76,7 +76,7 @@ const howItWorks = [
     number: "01",
     title: "Choose a Temple or Service",
     description:
-      "Explore temples, Poojas and spiritual services available through DivyaArpan.",
+      "Explore temples, Poojas and spiritual services available through DivyaDarpan.",
   },
   {
     icon: CalendarCheck2,
@@ -115,7 +115,7 @@ const howItWorks = [
   },
 ];
 
-export default function DivyaArpanServices() {
+export default function DivyaDarpanServices() {
   return (
     <section className="relative z-20 pb-8 pt-8">
       <div className="mx-auto max-w-[1240px] px-6">
@@ -263,7 +263,7 @@ export default function DivyaArpanServices() {
             </div>
 
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#10264b] md:text-5xl">
-              How DivyaArpan Works
+              How DivyaDarpan Works
             </h2>
 
             <p className="mx-auto mt-4 max-w-[700px] text-base leading-7 text-slate-600 md:text-lg">
@@ -318,7 +318,7 @@ export default function DivyaArpanServices() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-[720px] text-base leading-7 text-slate-600 md:text-lg">
-              DivyaArpan is designed to make devotional services easier to
+              DivyaDarpan is designed to make devotional services easier to
               discover, book and manage while keeping your booking details
               clear and transparent.
             </p>
@@ -359,7 +359,7 @@ export default function DivyaArpanServices() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-[720px] text-base leading-7 text-slate-600 md:text-lg">
-              DivyaArpan is designed to make devotional services easier to
+              DivyaDarpan is designed to make devotional services easier to
               discover, book and manage while keeping your booking details
               clear and transparent.
             </p>
@@ -400,7 +400,7 @@ export default function DivyaArpanServices() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-[700px] text-base leading-7 text-slate-600 md:text-lg">
-              Once your booking is completed, DivyaArpan keeps your booking
+              Once your booking is completed, DivyaDarpan keeps your booking
               details clear so you know what to expect next.
             </p>
           </div>
@@ -430,7 +430,7 @@ export default function DivyaArpanServices() {
             <AfterBookingItem
               number="04"
               title="Need Help?"
-              description="If you have questions about your booking, you can contact DivyaArpan for assistance."
+              description="If you have questions about your booking, you can contact DivyaDarpan for assistance."
               icon={<Headphones size={27} strokeWidth={1.7} />}
             />
           </div>
@@ -459,12 +459,12 @@ export default function DivyaArpanServices() {
               <p className="mx-auto mt-4 max-w-[700px] text-base leading-7 text-slate-600 md:text-lg">
                 From booking sacred Poojas and connecting with verified
                 Pandits to spiritual guidance and devotional offerings —
-                DivyaArpan is bringing everything you need for your
+                DivyaDarpan is bringing everything you need for your
                 spiritual journey together, in one beautiful platform.
               </p>
 
               <p className="mt-4 text-base font-semibold text-orange-600">
-                Be among the first to experience DivyaArpan.
+                Be among the first to experience DivyaDarpan.
               </p>
 
               <form
@@ -503,7 +503,7 @@ export default function DivyaArpanServices() {
               </form>
 
               <p className="mt-4 text-xs text-slate-500">
-                We&apos;ll only use your details to share DivyaArpan launch
+                We&apos;ll only use your details to share DivyaDarpan launch
                 updates.
               </p>
 

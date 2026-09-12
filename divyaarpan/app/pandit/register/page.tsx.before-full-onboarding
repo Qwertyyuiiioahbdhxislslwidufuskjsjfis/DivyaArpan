@@ -1,0 +1,325 @@
+"use client";
+
+import Link from "next/link";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+
+const LANGUAGES = [
+  "Hindi",
+  "Marathi",
+  "English",
+  "Sanskrit",
+  "Gujarati",
+  "Tamil",
+  "Telugu",
+  "Kannada",
+  "Bengali",
+];
+
+const SERVICES = [
+  "Ganesh Pooja",
+  "Satyanarayan Pooja",
+  "Griha Pravesh",
+  "Vastu Pooja",
+  "Navgraha Pooja",
+  "Havan",
+  "Marriage Pooja",
+  "Mundan",
+  "Naming Ceremony",
+  "Shraddha / Pitru Pooja",
+];
+
+export default function PanditRegisterPage() {
+  const router = useRouter();
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [services, setServices] = useState<string[]>([]);
+
+  function toggleItem(
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) {
+    setter((current) =>
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value]
+    );
+  }
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setError("");
+    setLoading(true);
+
+    const form = new FormData(event.currentTarget);
+
+    const password = String(
+      form.get("password") || ""
+    );
+
+    const confirmation = String(
+      form.get("confirmation") || ""
+    );
+
+    if (password !== confirmation) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    if (languages.length === 0) {
+      setError("Please select at least one language.");
+      setLoading(false);
+      return;
+    }
+
+    if (services.length === 0) {
+      setError("Please select at least one service.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "/api/auth/pandit-register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: form.get("name"),
+            email: form.get("email"),
+            mobile: form.get("mobile"),
+            password,
+            city: form.get("city"),
+            state: form.get("state"),
+            languages,
+            services,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            "Unable to create Pandit account."
+        );
+      }
+
+      router.replace("/pandit/dashboard");
+    } catch (registrationError) {
+      setError(
+        registrationError instanceof Error
+          ? registrationError.message
+          : "Unable to create Pandit account."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-orange-50 px-6 py-12">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-8 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-600">
+            DivyaArpan Partner Portal
+          </p>
+
+          <h1 className="mt-3 text-4xl font-bold text-orange-800">
+            Become a DivyaArpan Pandit
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+            Create your Pandit account and join our verified
+            spiritual service network.
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-3xl bg-white p-8 shadow-xl md:p-10"
+        >
+          <div className="grid gap-5 md:grid-cols-2">
+
+            <label className="font-semibold text-gray-700 md:col-span-2">
+              Full Name *
+              <input
+                name="name"
+                required
+                minLength={2}
+                autoComplete="name"
+                className="mt-2 w-full rounded-xl border border-gray-200 p-3 font-normal outline-none focus:border-orange-500"
+                placeholder="Enter your full name"
+              />
+            </label>
+
+            <label className="font-semibold text-gray-700">
+              Mobile Number *
+              <input
+                name="mobile"
+                type="tel"
+                required
+                autoComplete="tel"
+                className="mt-2 w-full rounded-xl border border-gray-200 p-3 font-normal outline-none focus:border-orange-500"
+                placeholder="10 digit mobile number"
+              />
+            </label>
+
+            <label className="font-semibold text-gray-700">
+              Email Address *
+              <input
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                className="mt-2 w-full rounded-xl border border-gray-200 p-3 font-normal outline-none focus:border-orange-500"
+                placeholder="yourname@example.com"
+              />
+            </label>
+
+            <label className="font-semibold text-gray-700">
+              Password *
+              <input
+                name="password"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="mt-2 w-full rounded-xl border border-gray-200 p-3 font-normal outline-none focus:border-orange-500"
+                placeholder="Minimum 8 characters"
+              />
+            </label>
+
+            <label className="font-semibold text-gray-700">
+              Confirm Password *
+              <input
+                name="confirmation"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="mt-2 w-full rounded-xl border border-gray-200 p-3 font-normal outline-none focus:border-orange-500"
+                placeholder="Re-enter password"
+              />
+            </label>
+
+            <label className="font-semibold text-gray-700">
+              City *
+              <input
+                name="city"
+                required
+                defaultValue="Mumbai"
+                className="mt-2 w-full rounded-xl border border-gray-200 p-3 font-normal outline-none focus:border-orange-500"
+              />
+            </label>
+
+            <label className="font-semibold text-gray-700">
+              State *
+              <input
+                name="state"
+                required
+                defaultValue="Maharashtra"
+                className="mt-2 w-full rounded-xl border border-gray-200 p-3 font-normal outline-none focus:border-orange-500"
+              />
+            </label>
+          </div>
+
+          <section className="mt-8">
+            <h2 className="text-lg font-bold text-gray-900">
+              Languages You Speak *
+            </h2>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
+              {LANGUAGES.map((language) => (
+                <button
+                  key={language}
+                  type="button"
+                  onClick={() =>
+                    toggleItem(language, setLanguages)
+                  }
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                    languages.includes(language)
+                      ? "border-orange-600 bg-orange-100 text-orange-800"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-orange-300"
+                  }`}
+                >
+                  {language}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-8">
+            <h2 className="text-lg font-bold text-gray-900">
+              Services You Perform *
+            </h2>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {SERVICES.map((service) => (
+                <button
+                  key={service}
+                  type="button"
+                  onClick={() =>
+                    toggleItem(service, setServices)
+                  }
+                  className={`rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                    services.includes(service)
+                      ? "border-orange-600 bg-orange-100 text-orange-800"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-orange-300"
+                  }`}
+                >
+                  {service}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {error && (
+            <p
+              role="alert"
+              className="mt-6 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-600"
+            >
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-8 w-full rounded-xl bg-orange-600 py-4 font-bold text-white shadow-md transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading
+              ? "Creating Pandit Account..."
+              : "Create Pandit Account"}
+          </button>
+
+          <div className="mt-6 rounded-xl bg-orange-50 p-4 text-sm text-gray-600">
+            <strong>Important:</strong> Your account will
+            require DivyaArpan verification before you can
+            receive booking requests.
+          </div>
+
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Already registered?{" "}
+            <Link
+              href="/login"
+              className="font-bold text-orange-700 hover:underline"
+            >
+              Login here
+            </Link>
+          </p>
+        </form>
+      </div>
+    </main>
+  );
+}

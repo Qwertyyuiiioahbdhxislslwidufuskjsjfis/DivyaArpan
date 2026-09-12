@@ -1,0 +1,265 @@
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+
+export default function LoginScreen() {
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLogin = () => {
+    // Authentication will be connected to the existing DivyaArpan
+    // Pandit login API in the next stage.
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.content}>
+          <View style={styles.logoCircle}>
+            <Text style={styles.logoText}>ॐ</Text>
+          </View>
+
+          <Text style={styles.brand}>DivyaArpan</Text>
+          <Text style={styles.portal}>PANDIT PORTAL</Text>
+
+          <View style={styles.welcomeBlock}>
+            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.subtitle}>
+              Sign in to manage your bookings and services.
+            </Text>
+          </View>
+
+          <View style={styles.form}>
+            <View style={styles.field}>
+              <Text style={styles.label}>Login ID</Text>
+              <TextInput
+                value={loginId}
+                onChangeText={setLoginId}
+                placeholder="Enter your Pandit Login ID"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Password</Text>
+
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={styles.passwordInput}
+                />
+
+                <Pressable
+                  onPress={() => setShowPassword((value) => !value)}
+                  style={styles.showButton}
+                >
+                  <Text style={styles.showText}>
+                    {showPassword ? "Hide" : "Show"}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <Pressable
+              onPress={handleLogin}
+              style={({ pressed }) => [
+                styles.loginButton,
+                pressed && styles.loginButtonPressed,
+              ]}
+            >
+              <Text style={styles.loginButtonText}>Login</Text>
+            </Pressable>
+
+            <View style={styles.links}>
+              <Pressable>
+                <Text style={styles.link}>Forgot Login ID?</Text>
+              </Pressable>
+
+              <Pressable>
+                <Text style={styles.link}>Forgot Password?</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Authorized Pandit Partner Access
+            </Text>
+            <Text style={styles.version}>DivyaArpan Partner App</Text>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFDF8",
+  },
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    paddingBottom: 24,
+  },
+  logoCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#FFF1D6",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginBottom: 14,
+  },
+  logoText: {
+    fontSize: 38,
+    color: "#A16207",
+  },
+  brand: {
+    fontSize: 32,
+    fontWeight: "800",
+    textAlign: "center",
+    color: "#7C2D12",
+    letterSpacing: 0.3,
+  },
+  portal: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 3,
+    textAlign: "center",
+    color: "#A16207",
+  },
+  welcomeBlock: {
+    marginTop: 52,
+    marginBottom: 28,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#1F2937",
+  },
+  subtitle: {
+    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#6B7280",
+  },
+  form: {
+    gap: 20,
+  },
+  field: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#374151",
+  },
+  input: {
+    height: 54,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: "#111827",
+  },
+  passwordContainer: {
+    height: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  passwordInput: {
+    flex: 1,
+    height: "100%",
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: "#111827",
+  },
+  showButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  showText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#A16207",
+  },
+  loginButton: {
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: "#A16207",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  loginButtonPressed: {
+    opacity: 0.8,
+  },
+  loginButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  links: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 2,
+  },
+  link: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#A16207",
+  },
+  footer: {
+    marginTop: "auto",
+    alignItems: "center",
+    paddingTop: 32,
+  },
+  footerText: {
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+  version: {
+    marginTop: 5,
+    fontSize: 11,
+    color: "#D1D5DB",
+  },
+});

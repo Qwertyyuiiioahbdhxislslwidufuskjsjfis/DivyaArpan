@@ -1,0 +1,81 @@
+import { PanditBookingType, PanditVerificationStatus } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+
+interface FilterParams {
+  city: string;
+  service: string;
+  language: string;
+  bookingType: PanditBookingType;
+}
+
+export async function findEligiblePandits({
+  city,
+  service,
+  language,
+  bookingType,
+}: FilterParams) {
+  console.log("======================================");
+  console.log("DIVYAARPAN SMART MATCH ENGINE");
+  console.log("Searching Eligible Pandits...");
+  console.log("City:", city);
+  console.log("Service:", service);
+  console.log("Language:", language);
+  console.log("Booking Type:", bookingType);
+  console.log("======================================");
+
+  const pandits = await prisma.pandit.findMany({
+    where: {
+      city: {
+        equals: city,
+        mode: "insensitive",
+      },
+
+      isActive: true,
+
+      verificationStatus: PanditVerificationStatus.VERIFIED,
+
+      ...(bookingType === "IMMEDIATE"
+        ? {
+            isOnline: true,
+            acceptsImmediate: true,
+          }
+        : {
+            acceptsScheduled: true,
+          }),
+
+      services: {
+        some: {
+          serviceName: {
+            equals: service,
+            mode: "insensitive",
+          },
+          isActive: true,
+        },
+      },
+
+      languages: {
+        some: {
+          language: {
+            equals: language,
+            mode: "insensitive",
+          },
+        },
+      },
+    },
+
+    include: {
+      services: true,
+      languages: true,
+      availability: true,
+      serviceAreas: true,
+    },
+
+    orderBy: {
+      rating: "desc",
+    },
+  });
+
+  console.log(`✅ ${pandits.length} Eligible Pandits Found`);
+
+  return pandits;
+}

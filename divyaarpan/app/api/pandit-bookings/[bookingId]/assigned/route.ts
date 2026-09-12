@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/app/lib/auth";
 import { hasGuestBookingAccess } from "@/app/lib/booking-access";
-
-const prisma = new PrismaClient();
+import { runMatchingEngine } from "@/lib/matching-engine";
 
 export async function GET(
   request: NextRequest,
@@ -33,32 +32,143 @@ export async function GET(
           assigned: false,
           message: "Booking not found.",
         },
-        {
-          status: 404,
-        }
-      );
-    }
-
-    const isOwner = user?.role === "DEVOTEE" && booking.devoteeId === user.devoteeId;
-    const isAdmin = user?.role === "ADMIN";
-    if (!isOwner && !isAdmin && !hasGuestBookingAccess(request, bookingId)) {
-      return NextResponse.json(
-        { assigned: false, message: "Booking not found." },
         { status: 404 }
       );
     }
 
-    if (!booking.assignedPandit) {
+    const isOwner =
+      user?.role === "DEVOTEE" &&
+      booking.devoteeId === user.devoteeId;
+
+    const isAdmin = user?.role === "ADMIN";
+
+    if (
+      !isOwner &&
+      !isAdmin &&
+      !hasGuestBookingAccess(request, bookingId)
+    ) {
+      return NextResponse.json(
+        {
+          assigned: false,
+          message: "Booking not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * HOUSEKEEPING
+     * ---------------------------------------------------------
+     *
+     * The customer is actively waiting on the searching page.
+     * Use that request to process expired offers.
+     *
+     * This keeps the matching engine backend-driven and avoids
+     * making the browser responsible for matching decisions.
+     */
+
+    if (
+      booking.status === "SEARCHING" &&
+      !booking.panditId
+    ) {
+      const now = new Date();
+
+      const expiredOffers =
+        await prisma.panditBookingOffer.findMany({
+          where: {
+            bookingId: booking.id,
+            status: "PENDING",
+            expiresAt: {
+              lte: now,
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      if (expiredOffers.length > 0) {
+        await prisma.panditBookingOffer.updateMany({
+          where: {
+            id: {
+              in: expiredOffers.map((offer) => offer.id),
+            },
+            status: "PENDING",
+          },
+          data: {
+            status: "EXPIRED",
+            respondedAt: now,
+          },
+        });
+      }
+
+      /*
+       * Re-check whether any active offers remain.
+       */
+      const pendingOffers =
+        await prisma.panditBookingOffer.count({
+          where: {
+            bookingId: booking.id,
+            status: "PENDING",
+          },
+        });
+
+      /*
+       * If all current offers have expired/been resolved,
+       * start the next matching round.
+       */
+      if (pendingOffers === 0) {
+        await runMatchingEngine(booking.id);
+      }
+    }
+
+    /*
+     * Fetch the latest booking state after housekeeping.
+     */
+    const latestBooking =
+      await prisma.panditBooking.findUnique({
+        where: {
+          id: booking.id,
+        },
+        include: {
+          assignedPandit: {
+            include: {
+              languages: true,
+              services: true,
+            },
+          },
+        },
+      });
+
+    if (!latestBooking) {
+      return NextResponse.json(
+        {
+          assigned: false,
+          message: "Booking not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    /*
+     * No Pandit assigned yet.
+     */
+    if (!latestBooking.assignedPandit) {
       return NextResponse.json({
         assigned: false,
-        status: booking.status,
+        status: latestBooking.status,
       });
     }
 
-    const pandit = booking.assignedPandit;
+    /*
+     * Pandit assigned.
+     */
+    const pandit = latestBooking.assignedPandit;
 
     return NextResponse.json({
       assigned: true,
+      status: latestBooking.status,
       pandit: {
         id: pandit.id,
         panditCode: pandit.panditCode,
@@ -73,16 +183,17 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("ASSIGNED PANDIT ERROR:", error);
+    console.error(
+      "ASSIGNED PANDIT ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         assigned: false,
         message: "Unable to fetch assigned pandit.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

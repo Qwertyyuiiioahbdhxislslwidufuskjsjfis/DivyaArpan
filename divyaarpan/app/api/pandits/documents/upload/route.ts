@@ -32,8 +32,21 @@ export async function POST(request: Request) {
     }
     const formData = await request.formData();
 
-    const file = formData.get("file");
-    const documentType = formData.get("documentType");
+    const file = Reflect.get(
+      formData,
+      "get"
+    ).call(
+      formData,
+      "file"
+    ) as FormDataEntryValue | null;
+
+    const documentType = Reflect.get(
+      formData,
+      "get"
+    ).call(
+      formData,
+      "documentType"
+    ) as FormDataEntryValue | null;
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -141,9 +154,9 @@ export async function POST(request: Request) {
 
     const uploadDirectory = path.join(
       process.cwd(),
-      "public",
       "uploads",
-      "pandits"
+      "pandits",
+      "private"
     );
 
     await mkdir(uploadDirectory, {
@@ -173,7 +186,7 @@ export async function POST(request: Request) {
     */
 
     const documentUrl =
-      `/uploads/pandits/${fileName}`;
+      `private://${fileName}`;
 
     return NextResponse.json(
       {

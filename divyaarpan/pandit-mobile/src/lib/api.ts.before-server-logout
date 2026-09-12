@@ -1,0 +1,60 @@
+import * as SecureStore from "expo-secure-store";
+
+export const API_BASE_URL =
+  "https://probable-engine-56gj6xwj4w437pg9-3000.app.github.dev";
+
+export const PANDIT_SESSION_KEY =
+  "divyaarpan_pandit_session";
+
+export const PANDIT_SESSION_EXPIRY_KEY =
+  "divyaarpan_pandit_session_expires_at";
+
+export const PANDIT_USER_KEY =
+  "divyaarpan_pandit_user";
+
+export async function getPanditSessionToken() {
+  return SecureStore.getItemAsync(PANDIT_SESSION_KEY);
+}
+
+export async function clearPanditSession() {
+  await Promise.all([
+    SecureStore.deleteItemAsync(PANDIT_SESSION_KEY),
+    SecureStore.deleteItemAsync(PANDIT_SESSION_EXPIRY_KEY),
+    SecureStore.deleteItemAsync(PANDIT_USER_KEY),
+  ]);
+}
+
+export async function panditApiFetch(
+  path: string,
+  options: RequestInit = {}
+) {
+  const token = await getPanditSessionToken();
+
+  if (!token) {
+    throw new Error("AUTH_REQUIRED");
+  }
+
+  const headers = new Headers(options.headers);
+
+  headers.set("Authorization", `Bearer ${token}`);
+
+  if (
+    options.body &&
+    !(options.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (response.status === 401) {
+    await clearPanditSession();
+    throw new Error("SESSION_EXPIRED");
+  }
+
+  return response;
+}

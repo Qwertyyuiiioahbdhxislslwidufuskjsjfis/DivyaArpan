@@ -1,0 +1,85 @@
+import { NextResponse } from "next/server";
+
+import { addMobileCors } from "@/app/lib/mobile-cors";
+import { prisma } from "@/lib/prisma";
+
+function mobileJson(
+  body: unknown,
+  init?: ResponseInit
+) {
+  return addMobileCors(
+    NextResponse.json(body, init)
+  );
+}
+
+export async function OPTIONS() {
+  return addMobileCors(
+    new NextResponse(null, { status: 204 })
+  );
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    const email =
+      typeof body.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
+
+    const mobile =
+      typeof body.mobile === "string"
+        ? body.mobile.replace(/\D/g, "")
+        : "";
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return mobileJson(
+        {
+          message: "Please enter a valid email address.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      return mobileJson(
+        {
+          message:
+            "Please enter a valid 10-digit Indian mobile number.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const [emailExists, mobileExists] =
+      await Promise.all([
+        prisma.pandit.findFirst({
+          where: { email },
+          select: { id: true },
+        }),
+
+        prisma.pandit.findFirst({
+          where: { mobile },
+          select: { id: true },
+        }),
+      ]);
+
+    return mobileJson({
+      emailAvailable: !emailExists,
+      mobileAvailable: !mobileExists,
+    });
+  } catch (error) {
+    console.error(
+      "Pandit registration availability check failed:",
+      error
+    );
+
+    return mobileJson(
+      {
+        message:
+          "Unable to validate email and mobile number.",
+      },
+      { status: 500 }
+    );
+  }
+}

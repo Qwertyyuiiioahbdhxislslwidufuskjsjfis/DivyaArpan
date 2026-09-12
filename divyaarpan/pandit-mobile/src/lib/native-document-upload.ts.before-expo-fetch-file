@@ -1,0 +1,163 @@
+import * as FileSystem from "expo-file-system/legacy";
+
+import { API_BASE_URL } from "./api";
+
+type NativeDocumentUploadOptions = {
+  sessionToken: string;
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  documentType: string;
+  documentNumber: string;
+};
+
+export async function uploadPanditDocumentNative({
+  sessionToken,
+  uri,
+  fileName,
+  mimeType,
+  documentType,
+  documentNumber,
+}: NativeDocumentUploadOptions) {
+  if (!sessionToken) {
+    throw new Error(
+      "Your session has expired. Please login again."
+    );
+  }
+
+  if (!uri) {
+    throw new Error(
+      `${documentType} file is missing. Please select it again.`
+    );
+  }
+
+  if (!uri.startsWith("file://")) {
+    throw new Error(
+      `${documentType} is not available as a local cached file. Please select it again.`
+    );
+  }
+
+  if (!documentNumber.trim()) {
+    throw new Error(
+      `Please enter the document number for ${documentType}.`
+    );
+  }
+
+  console.log("[KYC UPLOAD] preparing native multipart", {
+    documentType,
+    fileName,
+    mimeType,
+    uri,
+  });
+
+  const fileInfo = await FileSystem.getInfoAsync(uri);
+
+  console.log(
+    `[KYC FILE CHECK] exists=${fileInfo.exists} uri=${uri}`
+  );
+
+  if (!fileInfo.exists) {
+    throw new Error(
+      `${documentType} cached file does not exist. Please select it again.`
+    );
+  }
+
+  let response: FileSystem.FileSystemUploadResult;
+
+  try {
+    response = await FileSystem.uploadAsync(
+      `${API_BASE_URL}/api/pandit/documents/upload`,
+      uri,
+      {
+        httpMethod: "POST",
+        uploadType:
+          FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: "file",
+        mimeType,
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+        parameters: {
+          documentType,
+          documentNumber: documentNumber.trim(),
+        },
+      }
+    );
+  } catch (error) {
+    const errorName =
+      error instanceof Error ? error.name : "UnknownError";
+
+    const errorMessage =
+      error instanceof Error ? error.message : String(error);
+
+    console.error(
+      `[KYC UPLOAD EXACT ERROR] name=${errorName} message=${errorMessage}`
+    );
+
+    throw new Error(
+      `KYC_UPLOAD_FAILED: ${errorName}: ${errorMessage}`
+    );
+  }
+
+  console.log("[KYC UPLOAD] server response", {
+    documentType,
+    status: response.status,
+  });
+
+  let result: any = {};
+
+  try {
+    if (response.body) {
+      result = JSON.parse(response.body);
+    }
+  } catch (error) {
+    console.error("[KYC UPLOAD] invalid JSON response", {
+      documentType,
+      status: response.status,
+      body: response.body,
+    });
+
+    throw new Error(
+      `${documentType} upload returned an invalid server response.`
+    );
+  }
+
+  if (response.status < 200 || response.status >= 300) {
+    console.error("[KYC UPLOAD] rejected by server", {
+      documentType,
+      status: response.status,
+      message:
+        result?.message ||
+        result?.error ||
+        response.body,
+    });
+
+    throw new Error(
+      result?.message ||
+        result?.error ||
+        `Unable to upload ${documentType}.`
+    );
+  }
+
+  if (!result?.success || !result?.documentId) {
+    console.error(
+      "[KYC UPLOAD] server did not confirm document save",
+      {
+        documentType,
+        status: response.status,
+        result,
+      }
+    );
+
+    throw new Error(
+      `${documentType} was uploaded but the save could not be confirmed.`
+    );
+  }
+
+  console.log("[KYC UPLOAD] saved", {
+    documentType,
+    documentId: result.documentId,
+  });
+
+  return result;
+}

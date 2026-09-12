@@ -1,0 +1,668 @@
+import { router, useLocalSearchParams } from "expo-router";
+import React from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
+import PanditShell from "@/components/pandit/PanditShell";
+import { Colors, Radius, Spacing } from "@/constants/theme";
+
+export default function RequestDetailsScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  return (
+    <PanditShell
+      activeTab="requests"
+      notificationCount={2}
+      onTabPress={(tab) => {
+        if (tab === "home") router.replace("/dashboard");
+        if (tab === "requests") router.replace("/requests");
+        if (tab === "bookings") router.replace("/bookings");
+        if (tab === "notifications") router.replace("/notifications");
+        if (tab === "profile") router.replace("/profile");
+      }}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Back */}
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={20}
+            color={Colors.text}
+          />
+          <Text style={styles.backText}>Booking Request</Text>
+        </Pressable>
+
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.heroIcon}>
+            <Ionicons
+              name="sparkles-outline"
+              size={30}
+              color={Colors.primary}
+            />
+          </View>
+
+          <Text style={styles.serviceName}>
+            Satyanarayan Pooja
+          </Text>
+
+          <Text style={styles.bookingId}>
+            {id || "DA-REQ-001"}
+          </Text>
+
+          <View style={styles.pendingBadge}>
+            <View style={styles.pendingDot} />
+            <Text style={styles.pendingText}>Pending Response</Text>
+          </View>
+        </View>
+
+        {/* Schedule */}
+        <Section title="Schedule">
+          <DetailRow
+            icon="calendar-outline"
+            label="Date"
+            value="Today, 6 September 2026"
+          />
+
+          <DetailRow
+            icon="time-outline"
+            label="Time"
+            value="6:00 PM"
+          />
+
+          <DetailRow
+            icon="hourglass-outline"
+            label="Booking Type"
+            value="Scheduled"
+          />
+        </Section>
+
+        {/* Location */}
+        <Section title="Service Location">
+          <DetailRow
+            icon="location-outline"
+            label="Area"
+            value="Andheri West"
+          />
+
+          <DetailRow
+            icon="business-outline"
+            label="City"
+            value="Mumbai, Maharashtra"
+          />
+
+          <View style={styles.addressBox}>
+            <Ionicons
+              name="navigate-outline"
+              size={18}
+              color={Colors.primary}
+            />
+
+            <Text style={styles.addressText}>
+              Customer location details will appear here
+              after the booking is confirmed.
+            </Text>
+          </View>
+        </Section>
+
+        {/* Devotee */}
+        <Section title="Devotee Details">
+          <View style={styles.devoteeCard}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>R</Text>
+            </View>
+
+            <View style={styles.devoteeInfo}>
+              <Text style={styles.devoteeName}>
+                Rahul Sharma
+              </Text>
+
+              <Text style={styles.devoteeLocation}>
+                Mumbai, Maharashtra
+              </Text>
+            </View>
+          </View>
+
+          <DetailRow
+            icon="call-outline"
+            label="Contact"
+            value="Available after acceptance"
+          />
+        </Section>
+
+        {/* Pooja */}
+        <Section title="Pooja Details">
+          <DetailRow
+            icon="sparkles-outline"
+            label="Pooja"
+            value="Satyanarayan Pooja"
+          />
+
+          <DetailRow
+            icon="cube-outline"
+            label="Samagri"
+            value="Required"
+            positive
+          />
+
+          <DetailRow
+            icon="language-outline"
+            label="Preferred Language"
+            value="Hindi"
+          />
+        </Section>
+
+        {/* Sankalp */}
+        <Section title="Mannat / Sankalp">
+          <View style={styles.sankalpBox}>
+            <Ionicons
+              name="heart-outline"
+              size={20}
+              color={Colors.primary}
+            />
+
+            <Text style={styles.sankalpText}>
+              Customer has requested blessings and a
+              successful completion of their Sankalp.
+            </Text>
+          </View>
+        </Section>
+
+        {/* Price */}
+        <View style={styles.priceCard}>
+          <View style={styles.priceTop}>
+            <View>
+              <Text style={styles.priceLabel}>
+                Final DivyaArpan Customer Price
+              </Text>
+
+              <Text style={styles.price}>₹2,100</Text>
+            </View>
+
+            <View style={styles.lockBadge}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={15}
+                color={Colors.primaryDark}
+              />
+
+              <Text style={styles.lockText}>Fixed</Text>
+            </View>
+          </View>
+
+          <View style={styles.priceDivider} />
+
+          <Text style={styles.priceDescription}>
+            This is the final amount charged to the customer.
+            The Pandit partner cannot modify this amount.
+          </Text>
+        </View>
+
+        {/* Important */}
+        <View style={styles.importantCard}>
+          <Ionicons
+            name="information-circle-outline"
+            size={21}
+            color={Colors.warning}
+          />
+
+          <View style={styles.importantContent}>
+            <Text style={styles.importantTitle}>
+              Before accepting this request
+            </Text>
+
+            <Text style={styles.importantText}>
+              Please make sure you are available at the
+              requested time and can provide the required
+              service and Samagri.
+            </Text>
+          </View>
+        </View>
+
+        {/* Actions */}
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => {}}
+            style={styles.rejectButton}
+          >
+            <Ionicons
+              name="close-outline"
+              size={19}
+              color={Colors.error}
+            />
+
+            <Text style={styles.rejectText}>
+              Reject
+            </Text>
+          </Pressable>
+
+          <Pressable
+  onPress={() =>
+    router.push({
+      pathname: "/bookings/[id]",
+      params: { id: "DA-BKG-001" },
+    })
+  }
+  style={styles.acceptButton}
+>
+            <Ionicons
+              name="checkmark-outline"
+              size={19}
+              color={Colors.white}
+            />
+
+            <Text style={styles.acceptText}>
+              Accept Request
+            </Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.footerNote}>
+          By accepting, you confirm your availability for
+          this booking.
+        </Text>
+
+        <View style={{ height: Spacing.xxl }} />
+      </ScrollView>
+    </PanditShell>
+  );
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+
+      <View style={styles.sectionCard}>{children}</View>
+    </View>
+  );
+}
+
+function DetailRow({
+  icon,
+  label,
+  value,
+  positive,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  positive?: boolean;
+}) {
+  return (
+    <View style={styles.detailRow}>
+      <View style={styles.detailIcon}>
+        <Ionicons
+          name={icon}
+          size={18}
+          color={
+            positive ? Colors.success : Colors.primary
+          }
+        />
+      </View>
+
+      <View style={styles.detailContent}>
+        <Text style={styles.detailLabel}>{label}</Text>
+
+        <Text
+          style={[
+            styles.detailValue,
+            positive && styles.positiveValue,
+          ]}
+        >
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+  },
+
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+
+  backText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+
+  hero: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  heroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  serviceName: {
+    marginTop: Spacing.md,
+    fontSize: 20,
+    fontWeight: "800",
+    color: Colors.text,
+    textAlign: "center",
+  },
+
+  bookingId: {
+    marginTop: 4,
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+
+  pendingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.md,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.warningSoft,
+  },
+
+  pendingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+    backgroundColor: Colors.warning,
+  },
+
+  pendingText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.warning,
+  },
+
+  section: {
+    marginTop: Spacing.xl,
+  },
+
+  sectionTitle: {
+    marginBottom: Spacing.md,
+    fontSize: 16,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  sectionCard: {
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+
+  detailIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  detailContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  detailLabel: {
+    fontSize: 10,
+    color: Colors.textMuted,
+  },
+
+  detailValue: {
+    marginTop: 3,
+    fontSize: 13,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+
+  positiveValue: {
+    color: Colors.success,
+  },
+
+  addressBox: {
+    flexDirection: "row",
+    marginTop: 8,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceSoft,
+  },
+
+  addressText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 11,
+    lineHeight: 17,
+    color: Colors.textSecondary,
+  },
+
+  devoteeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primaryDark,
+  },
+
+  avatarText: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: Colors.white,
+  },
+
+  devoteeInfo: {
+    marginLeft: Spacing.md,
+  },
+
+  devoteeName: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  devoteeLocation: {
+    marginTop: 3,
+    fontSize: 11,
+    color: Colors.textSecondary,
+  },
+
+  sankalpBox: {
+    flexDirection: "row",
+    padding: Spacing.lg,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primarySoft,
+  },
+
+  sankalpText: {
+    flex: 1,
+    marginLeft: Spacing.md,
+    fontSize: 12,
+    lineHeight: 18,
+    color: Colors.primaryDark,
+  },
+
+  priceCard: {
+    marginTop: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.primarySoft,
+  },
+
+  priceTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  priceLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.primaryDark,
+  },
+
+  price: {
+    marginTop: 4,
+    fontSize: 28,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  lockBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surface,
+  },
+
+  lockText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.primaryDark,
+  },
+
+  priceDivider: {
+    height: 1,
+    marginVertical: Spacing.md,
+    backgroundColor: "rgba(124,45,18,0.15)",
+  },
+
+  priceDescription: {
+    fontSize: 11,
+    lineHeight: 17,
+    color: Colors.primaryDark,
+  },
+
+  importantCard: {
+    flexDirection: "row",
+    marginTop: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.warningSoft,
+  },
+
+  importantContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  importantTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: Colors.warning,
+  },
+
+  importantText: {
+    marginTop: 4,
+    fontSize: 11,
+    lineHeight: 17,
+    color: Colors.warning,
+  },
+
+  actions: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+  },
+
+  rejectButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.error,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 5,
+  },
+
+  rejectText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.error,
+  },
+
+  acceptButton: {
+    flex: 1.5,
+    height: 50,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primaryDark,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 5,
+  },
+
+  acceptText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.white,
+  },
+
+  footerNote: {
+    marginTop: Spacing.md,
+    fontSize: 10,
+    lineHeight: 15,
+    textAlign: "center",
+    color: Colors.textMuted,
+  },
+});

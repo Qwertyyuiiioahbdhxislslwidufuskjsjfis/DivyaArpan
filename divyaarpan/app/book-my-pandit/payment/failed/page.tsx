@@ -252,7 +252,7 @@ function PaymentFailedPageContent() {
           </div>
 
           <p className="mt-8 text-sm font-bold uppercase tracking-[0.25em] text-orange-100">
-            DivyaArpan Payment
+            DivyaDarpan Payment
           </p>
 
           <h1 className="mt-3 text-4xl font-bold md:text-6xl">
@@ -491,7 +491,7 @@ function PaymentFailedPageContent() {
                   </p>
 
                   <h2 className="mt-1 text-2xl font-bold text-gray-900">
-                    Contact DivyaArpan Support
+                    Contact DivyaDarpan Support
                   </h2>
 
                   <p className="mt-2 max-w-2xl leading-6 text-gray-600">
@@ -505,7 +505,7 @@ function PaymentFailedPageContent() {
 
               <div className="shrink-0 rounded-2xl bg-orange-50 px-6 py-4 text-center">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  DivyaArpan Support
+                  DivyaDarpan Support
                 </p>
 
                 <p className="mt-1 text-lg font-bold text-orange-700">
@@ -518,7 +518,7 @@ function PaymentFailedPageContent() {
               <p className="text-sm leading-6 text-gray-600">
                 📌 Please keep your{" "}
                 <strong>Booking ID</strong> ready when
-                contacting DivyaArpan Support.
+                contacting DivyaDarpan Support.
               </p>
             </div>
           </div>
@@ -545,7 +545,7 @@ function PaymentFailedPageContent() {
                     do not immediately make another
                     payment.
                   </strong>{" "}
-                  Contact DivyaArpan Support with your
+                  Contact DivyaDarpan Support with your
                   Booking ID so our team can check the
                   payment status.
                 </p>
@@ -558,12 +558,12 @@ function PaymentFailedPageContent() {
           <div className="rounded-3xl bg-white p-8 text-center shadow-sm md:p-10">
             <p className="text-xl font-bold text-gray-900">
               🙏 Your pooja details are safe with
-              DivyaArpan.
+              DivyaDarpan.
             </p>
 
             <p className="mx-auto mt-3 max-w-2xl leading-7 text-gray-600">
               We hope to complete your booking with you
-              soon. Thank you for choosing DivyaArpan.
+              soon. Thank you for choosing DivyaDarpan.
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

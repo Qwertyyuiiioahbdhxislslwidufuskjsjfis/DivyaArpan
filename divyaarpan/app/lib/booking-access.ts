@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { AuthUser } from "./auth";
 
 export const GUEST_BOOKING_COOKIE = "divyaarpan_guest_booking";
 
@@ -18,6 +19,19 @@ function getGuestBookingIds(request: Request) {
 
 export function hasGuestBookingAccess(request: Request, bookingId: string) {
   return getGuestBookingIds(request).includes(bookingId);
+}
+
+export function hasCustomerBookingAccess(
+  request: Request,
+  user: AuthUser | null,
+  bookingId: string,
+  devoteeId: number | null
+) {
+  if (user?.role === "DEVOTEE") {
+    return user.devoteeId !== null && user.devoteeId === devoteeId;
+  }
+
+  return hasGuestBookingAccess(request, bookingId);
 }
 
 export function setGuestBookingCookie(response: NextResponse, request: Request, bookingId: string) {

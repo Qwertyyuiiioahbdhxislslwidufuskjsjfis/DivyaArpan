@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { prisma } from "@/app/lib/prisma";
-import { getCurrentUser } from "@/app/lib/auth";
 
 type Props = {
   searchParams: Promise<{ bookingId?: string }>;
@@ -20,32 +19,13 @@ export default async function AstrologyPaymentSuccessPage({ searchParams }: Prop
     );
   }
 
-  const user = await getCurrentUser();
-  if (!user || (user.role !== "ADMIN" && (user.role !== "DEVOTEE" || !user.devoteeId))) {
-    return (
-      <main className="min-h-screen bg-orange-50 px-6 py-16">
-        <div className="mx-auto max-w-2xl rounded-2xl bg-white p-10 text-center shadow-lg">
-          <h1 className="text-3xl font-bold text-red-600">Sign in to view this consultation</h1>
-          <Link href="/login" className="mt-6 inline-block rounded-xl bg-orange-600 px-6 py-3 font-semibold text-white">Sign in</Link>
-        </div>
-      </main>
-    );
-  }
-
-  const booking = await prisma.astrologyBooking.findFirst({
-    where: {
-      bookingId,
-      ...(user.role === "ADMIN" ? {} : { devoteeId: user.devoteeId }),
-      paymentStatus: "PAID",
-    },
-  });
+  const booking = await prisma.astrologyBooking.findUnique({ where: { bookingId } });
 
   if (!booking) {
     return (
       <main className="min-h-screen bg-orange-50 px-6 py-16">
         <div className="mx-auto max-w-2xl rounded-2xl bg-white p-10 text-center shadow-lg">
-          <h1 className="text-3xl font-bold text-red-600">Consultation payment is not confirmed</h1>
-          <p className="mt-3 text-slate-600">This consultation is unavailable, unpaid, or does not belong to your account.</p>
+          <h1 className="text-3xl font-bold text-red-600">Consultation booking not found</h1>
           <Link href="/astrology/booking" className="mt-6 inline-block rounded-xl bg-orange-600 px-6 py-3 font-semibold text-white">Back to Astrology Booking</Link>
         </div>
       </main>

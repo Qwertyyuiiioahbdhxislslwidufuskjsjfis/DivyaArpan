@@ -1,0 +1,139 @@
+import { File } from "expo-file-system";
+
+import { API_BASE_URL } from "./api";
+
+type NativeDocumentUploadOptions = {
+  sessionToken: string;
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  documentType: string;
+  documentNumber: string;
+};
+
+export async function uploadPanditDocumentNative({
+  sessionToken,
+  uri,
+  fileName,
+  mimeType,
+  documentType,
+  documentNumber,
+}: NativeDocumentUploadOptions) {
+  let fileBase64 = "";
+
+  try {
+    /*
+     * Expo SDK 57 modern File API.
+     *
+     * DocumentPicker returns a URI which can be represented
+     * directly as an Expo File. Avoid legacy getInfoAsync /
+     * readAsStringAsync and avoid a second copyAsync.
+     */
+    const file = new File(uri);
+
+    if (!file.exists) {
+      throw new Error("FILE_NOT_FOUND");
+    }
+
+    if (
+      typeof file.size === "number" &&
+      file.size <= 0
+    ) {
+      throw new Error("FILE_EMPTY");
+    }
+
+    console.log("[KYC MOBILE] local file ready", {
+      documentType,
+      fileName,
+      size: file.size,
+      mimeType,
+    });
+
+    fileBase64 = file.base64Sync();
+  } catch (readError) {
+    console.error(
+      "[KYC MOBILE] local file read failed",
+      {
+        documentType,
+        fileName,
+        uri,
+        readError,
+      }
+    );
+
+    throw new Error(
+      `${documentType} could not be read from your device. Please select the document again.`
+    );
+  }
+
+  if (!fileBase64) {
+    throw new Error(
+      `${documentType} is empty. Please select the document again.`
+    );
+  }
+
+  console.log("[KYC MOBILE] uploading", {
+    documentType,
+    fileName,
+    mimeType,
+  });
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/pandit/documents/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        documentType,
+        documentNumber,
+        fileName,
+        mimeType,
+        fileBase64,
+      }),
+    }
+  );
+
+  let result: any = {};
+
+  try {
+    result = await response.json();
+  } catch {
+    result = {};
+  }
+
+  if (!response.ok) {
+    console.error(
+      "[KYC MOBILE] upload rejected",
+      {
+        documentType,
+        status: response.status,
+        message:
+          result.message ||
+          result.error ||
+          "Unknown server error",
+      }
+    );
+
+    throw new Error(
+      result.message ||
+        result.error ||
+        `Unable to upload ${documentType}.`
+    );
+  }
+
+  if (!result.success || !result.documentId) {
+    throw new Error(
+      `${documentType} was not saved correctly. Please try again.`
+    );
+  }
+
+  console.log("[KYC MOBILE] upload saved", {
+    documentType,
+    documentId: result.documentId,
+  });
+
+  return result;
+}

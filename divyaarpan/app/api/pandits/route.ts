@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { requireRole } from "../../lib/auth";
+import { requireRole, hashPassword } from "../../lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -51,6 +51,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (!(await requireRole("ADMIN"))) {
+      return NextResponse.json({ message: "Admin access required." }, { status: 403 });
+    }
     const body = await request.json();
 
     const {
@@ -75,6 +78,7 @@ export async function POST(request: Request) {
       services,
       serviceAreas,
       documents,
+      password,
     } = body;
 
     /*
@@ -98,6 +102,31 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           message: "Mobile number is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!email?.trim()) {
+      return NextResponse.json(
+        {
+          message: "Email address is required for Pandit login.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      typeof password !== "string" ||
+      password.length < 8
+    ) {
+      return NextResponse.json(
+        {
+          message: "Pandit login password must be at least 8 characters.",
         },
         {
           status: 400,
@@ -367,6 +396,24 @@ export async function POST(request: Request) {
 
     /*
     |--------------------------------------------------------------------------
+    | Create Pandit Login User
+    |--------------------------------------------------------------------------
+    */
+
+    const passwordHash = await hashPassword(password);
+
+    const user = await prisma.user.create({
+      data: {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: mobile.trim(),
+        passwordHash,
+        role: "PANDIT",
+      },
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | Create Pandit + Related Records
     |--------------------------------------------------------------------------
     */
@@ -374,6 +421,8 @@ export async function POST(request: Request) {
     const pandit = await prisma.pandit.create({
       data: {
         panditCode,
+
+        userId: user.id,
 
         name: name.trim(),
         mobile: mobile.trim(),
@@ -501,7 +550,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: "Pandit registered successfully.",
-        pandit,
+        pandit: {
+          ...pandit,
+          loginEmail: user.email,
+        },
       },
       {
         status: 201,

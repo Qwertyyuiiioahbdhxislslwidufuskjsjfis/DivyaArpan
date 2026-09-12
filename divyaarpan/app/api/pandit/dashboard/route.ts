@@ -1,14 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { requireRole } from "../../../lib/auth";
+import { getCurrentUserFromRequest } from "../../../lib/auth";
+import { addMobileCors } from "../../../lib/mobile-cors";
 
 const prisma = new PrismaClient();
 
+export async function OPTIONS() {
+  return addMobileCors(
+    new NextResponse(null, { status: 204 })
+  );
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireRole("PANDIT", "ADMIN");
-    if (!user) {
-      return NextResponse.json({ message: "Authentication required." }, { status: 401 });
+    const user =
+      await getCurrentUserFromRequest(request);
+
+    if (
+      !user ||
+      !["PANDIT", "ADMIN"].includes(user.role)
+    ) {
+      return addMobileCors(
+        NextResponse.json(
+          { message: "Authentication required." },
+          { status: 401 }
+        )
+      );
     }
     const { searchParams } = new URL(request.url);
 
@@ -43,6 +60,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (
+      user.role === "PANDIT" &&
+      pandit.verificationStatus !== "VERIFIED"
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            "Your Pandit profile is still under verification. Dashboard access will be available after Admin approval.",
+          verificationStatus: pandit.verificationStatus,
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
     const pendingOffers = await prisma.panditBookingOffer.findMany({
       where: {
         panditId,
@@ -62,9 +95,11 @@ export async function GET(request: NextRequest) {
         status: {
           in: [
             "PANDIT_ASSIGNED",
+            "AWAITING_PAYMENT",
             "CONFIRMED",
             "PANDIT_ON_THE_WAY",
             "IN_PROGRESS",
+            "CANCELLED",
           ],
         },
       },
@@ -81,6 +116,10 @@ export async function GET(request: NextRequest) {
       orderBy: {
         completedAt: "desc",
       },
+    });
+
+    const unreadNotifications = await prisma.panditNotification.count({
+      where: { panditId, isRead: false },
     });
 
     const today = new Date();
@@ -103,7 +142,25 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    return NextResponse.json({
+    const monthStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1
+    );
+
+    const monthEarnings = completedBookings
+      .filter(
+        (booking) =>
+          booking.completedAt &&
+          booking.completedAt >= monthStart
+      )
+      .reduce(
+        (sum, booking) =>
+          sum + Number(booking.amount ?? 0),
+        0
+      );
+
+    return addMobileCors(NextResponse.json({
       pandit: {
         id: pandit.id,
         panditCode: pandit.panditCode,
@@ -119,13 +176,16 @@ export async function GET(request: NextRequest) {
         assignedBookings: assignedBookings.length,
         completedBookings: completedBookings.length,
         todayEarnings,
+        monthEarnings,
         totalEarnings,
       },
+
+      unreadNotifications,
 
       pendingOffers,
       assignedBookings,
       completedBookings,
-    });
+    }));
   } catch (error) {
     console.error(error);
 

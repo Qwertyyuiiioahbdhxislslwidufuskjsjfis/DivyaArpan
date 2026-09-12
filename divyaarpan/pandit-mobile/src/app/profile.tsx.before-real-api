@@ -1,0 +1,800 @@
+import React from "react";
+import {
+  Alert,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
+import PanditShell from "@/components/pandit/PanditShell";
+import {
+  Colors,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+
+const services = [
+  "Satyanarayan Pooja",
+  "Griha Pravesh",
+  "Ganesh Pooja",
+  "Lakshmi Pooja",
+];
+
+const languages = ["Hindi", "Marathi", "Sanskrit"];
+
+const serviceAreas = [
+  "Andheri",
+  "Bandra",
+  "Borivali",
+  "Goregaon",
+  "Malad",
+];
+
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <View style={styles.infoIcon}>
+        <Ionicons
+          name={icon}
+          size={19}
+          color={Colors.primary}
+        />
+      </View>
+
+      <View style={styles.infoContent}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+function SettingRow({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  danger = false,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  subtitle?: string;
+  onPress: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.settingRow,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View
+        style={[
+          styles.settingIcon,
+          danger && styles.settingIconDanger,
+        ]}
+      >
+        <Ionicons
+          name={icon}
+          size={20}
+          color={danger ? Colors.error : Colors.primary}
+        />
+      </View>
+
+      <View style={styles.settingContent}>
+        <Text
+          style={[
+            styles.settingTitle,
+            danger && styles.settingTitleDanger,
+          ]}
+        >
+          {title}
+        </Text>
+
+        {subtitle ? (
+          <Text style={styles.settingSubtitle}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+
+      <Ionicons
+        name="chevron-forward"
+        size={19}
+        color={Colors.textMuted}
+      />
+    </Pressable>
+  );
+}
+
+export default function ProfileScreen() {
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: () => router.replace("/"),
+        },
+      ]
+    );
+  };
+
+  return (
+    <PanditShell
+      activeTab="profile"
+      notificationCount={2}
+      onTabPress={(tab) => {
+        if (tab === "home") {
+          router.replace("/dashboard");
+        }
+
+        if (tab === "requests") {
+          router.replace("/requests");
+        }
+
+        if (tab === "bookings") {
+          router.replace("/bookings");
+        }
+
+        if (tab === "notifications") {
+          router.replace("/notifications");
+        }
+
+        if (tab === "profile") {
+          router.replace("/profile");
+        }
+      }}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.content}
+        >
+          {/* =========================
+              PROFILE HEADER
+          ========================== */}
+
+          <View style={styles.profileCard}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>K</Text>
+            </View>
+
+            <View style={styles.profileIdentity}>
+              <View style={styles.nameRow}>
+                <Text style={styles.name}>
+                  Khushi Shukla
+                </Text>
+
+                <View style={styles.verifiedBadge}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={15}
+                    color={Colors.success}
+                  />
+
+                  <Text style={styles.verifiedText}>
+                    Verified
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.partnerId}>
+                DA-PND-00003
+              </Text>
+
+              <View style={styles.onlineRow}>
+                <View style={styles.onlineDot} />
+
+                <Text style={styles.onlineText}>
+                  Online & Available
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* =========================
+              PROFESSIONAL INFORMATION
+          ========================== */}
+
+          <Text style={styles.sectionTitle}>
+            Professional Information
+          </Text>
+
+          <View style={styles.card}>
+            <InfoRow
+              icon="briefcase-outline"
+              label="Experience"
+              value="8+ Years"
+            />
+
+            <View style={styles.divider} />
+
+            <InfoRow
+              icon="star-outline"
+              label="Rating"
+              value="5.0 · No. of ratings: 0"
+            />
+
+            <View style={styles.divider} />
+
+            <InfoRow
+              icon="location-outline"
+              label="Primary Location"
+              value="Mumbai, Maharashtra"
+            />
+
+            <View style={styles.divider} />
+
+            <InfoRow
+              icon="calendar-outline"
+              label="Partner Since"
+              value="2026"
+            />
+          </View>
+
+          {/* =========================
+              POOJA SERVICES
+          ========================== */}
+
+          <Text style={styles.sectionTitle}>
+            Pooja Services
+          </Text>
+
+          <View style={styles.card}>
+            <View style={styles.chipContainer}>
+              {services.map((service) => (
+                <View
+                  key={service}
+                  style={styles.chip}
+                >
+                  <Text style={styles.chipText}>
+                    {service}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* =========================
+              LANGUAGES
+          ========================== */}
+
+          <Text style={styles.sectionTitle}>
+            Languages
+          </Text>
+
+          <View style={styles.card}>
+            <View style={styles.chipContainer}>
+              {languages.map((language) => (
+                <View
+                  key={language}
+                  style={styles.languageChip}
+                >
+                  <Ionicons
+                    name="language-outline"
+                    size={15}
+                    color={Colors.primaryDark}
+                  />
+
+                  <Text style={styles.languageText}>
+                    {language}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* =========================
+              SERVICE AREAS
+          ========================== */}
+
+          <Text style={styles.sectionTitle}>
+            Service Areas
+          </Text>
+
+          <View style={styles.card}>
+            <View style={styles.chipContainer}>
+              {serviceAreas.map((area) => (
+                <View
+                  key={area}
+                  style={styles.areaChip}
+                >
+                  <Ionicons
+                    name="location-outline"
+                    size={14}
+                    color={Colors.primary}
+                  />
+
+                  <Text style={styles.areaText}>
+                    {area}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* =========================
+              VERIFICATION
+          ========================== */}
+
+          <Text style={styles.sectionTitle}>
+            Verification
+          </Text>
+
+          <View style={styles.verificationCard}>
+            <View style={styles.verificationIcon}>
+              <Ionicons
+                name="shield-checkmark"
+                size={24}
+                color={Colors.success}
+              />
+            </View>
+
+            <View style={styles.verificationContent}>
+              <Text style={styles.verificationTitle}>
+                Verified Partner
+              </Text>
+
+              <Text style={styles.verificationText}>
+                Your profile and required documents have
+                been verified by DivyaArpan.
+              </Text>
+            </View>
+
+            <Ionicons
+              name="checkmark-circle"
+              size={22}
+              color={Colors.success}
+            />
+          </View>
+
+          {/* =========================
+              ACCOUNT & SETTINGS
+          ========================== */}
+
+          <Text style={styles.sectionTitle}>
+            Account & Settings
+          </Text>
+
+          <View style={styles.card}>
+            {/* Availability */}
+
+            <SettingRow
+              icon="radio-outline"
+              title="Availability"
+              subtitle="Manage your online availability"
+              onPress={() =>
+                router.replace("/availability")
+              }
+            />
+
+            <View style={styles.divider} />
+
+            {/* Notifications */}
+
+            <SettingRow
+              icon="notifications-outline"
+              title="Notifications"
+              subtitle="Manage booking and partner alerts"
+              onPress={() =>
+                router.replace("/notifications")
+              }
+            />
+
+            <View style={styles.divider} />
+
+            {/* Change Password */}
+
+            <SettingRow
+              icon="lock-closed-outline"
+              title="Change Password"
+              subtitle="Update your account password"
+              onPress={() =>
+                router.push("/change-password")
+              }
+            />
+
+            <View style={styles.divider} />
+
+            {/* Help & Support */}
+
+            {/* Help & Support */}
+
+<SettingRow
+  icon="help-circle-outline"
+  title="Help & Support"
+  subtitle="Get assistance from DivyaArpan"
+  onPress={() => {
+    router.push("/help-support");
+  }}
+/>
+
+            <View style={styles.divider} />
+
+            {/* Terms & Policies */}
+
+            <SettingRow
+              icon="document-text-outline"
+              title="Terms & Policies"
+              subtitle="View partner terms and policies"
+              onPress={() => {
+                Alert.alert(
+                  "Terms & Policies",
+                  "Partner policies will be available here."
+                );
+              }}
+            />
+
+            <View style={styles.divider} />
+
+            {/* Logout */}
+
+            <SettingRow
+              icon="log-out-outline"
+              title="Logout"
+              onPress={handleLogout}
+              danger
+            />
+          </View>
+
+          {/* =========================
+              FOOTER
+          ========================== */}
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              DivyaArpan Partner App
+            </Text>
+
+            <Text style={styles.version}>
+              Version 1.0.0
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </PanditShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: 120,
+  },
+
+  /* Profile Header */
+
+  profileCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primaryDark,
+  },
+
+  avatarText: {
+    fontSize: 30,
+    fontWeight: "800",
+    color: Colors.white,
+  },
+
+  profileIdentity: {
+    flex: 1,
+    marginLeft: Spacing.lg,
+  },
+
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 7,
+  },
+
+  name: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.successSoft,
+  },
+
+  verifiedText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.success,
+  },
+
+  partnerId: {
+    marginTop: 5,
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.textSecondary,
+  },
+
+  onlineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 7,
+    gap: 5,
+  },
+
+  onlineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.success,
+  },
+
+  onlineText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.success,
+  },
+
+  /* Sections */
+
+  sectionTitle: {
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+    fontSize: 18,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  card: {
+    padding: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  /* Professional Information */
+
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 52,
+  },
+
+  infoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  infoContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  infoLabel: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontWeight: "600",
+  },
+
+  infoValue: {
+    marginTop: 3,
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: "700",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: 4,
+  },
+
+  /* Chips */
+
+  chipContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.primarySoft,
+    borderWidth: 1,
+    borderColor: "#f5d9a5",
+  },
+
+  chipText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.primaryDark,
+  },
+
+  languageChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  languageText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+
+  areaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surfaceSoft,
+  },
+
+  areaText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.textSecondary,
+  },
+
+  /* Verification */
+
+  verificationCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.successSoft,
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+  },
+
+  verificationIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.white,
+  },
+
+  verificationContent: {
+    flex: 1,
+    marginHorizontal: Spacing.md,
+  },
+
+  verificationTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.success,
+  },
+
+  verificationText: {
+    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 18,
+    color: Colors.textSecondary,
+  },
+
+  /* Settings */
+
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 62,
+  },
+
+  settingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.primarySoft,
+  },
+
+  settingIconDanger: {
+    backgroundColor: Colors.errorSoft,
+  },
+
+  settingContent: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  settingTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+
+  settingTitleDanger: {
+    color: Colors.error,
+  },
+
+  settingSubtitle: {
+    marginTop: 3,
+    fontSize: 11,
+    color: Colors.textSecondary,
+  },
+
+  /* Footer */
+
+  footer: {
+    alignItems: "center",
+    marginTop: Spacing.xxl,
+    marginBottom: Spacing.lg,
+  },
+
+  footerText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.textMuted,
+  },
+
+  version: {
+    marginTop: 3,
+    fontSize: 10,
+    color: Colors.textMuted,
+  },
+
+  pressed: {
+    opacity: 0.7,
+  },
+});

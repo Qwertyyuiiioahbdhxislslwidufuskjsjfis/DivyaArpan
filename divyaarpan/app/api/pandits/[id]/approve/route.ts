@@ -4,6 +4,7 @@ import {
   PrismaClient,
 } from "@prisma/client";
 import { requireRole } from "../../../../lib/auth";
+import { normalizePanditDocumentType, REQUIRED_PANDIT_DOCUMENT_TYPES } from "@/app/lib/pandit-documents";
 
 const prisma = new PrismaClient();
 
@@ -127,15 +128,13 @@ export async function PATCH(
     | 1. Government Photo ID
     | 2. PAN Card
     | 3. Address Proof
+    | 4. Police Verification
+    | 5. Pooja / Vedic Qualification Certificate
     |
     |--------------------------------------------------------------------------
     */
 
-    const requiredDocumentTypes = [
-      "GOVERNMENT_ID",
-      "PAN_CARD",
-      "ADDRESS_PROOF",
-    ];
+    const requiredDocumentTypes = REQUIRED_PANDIT_DOCUMENT_TYPES;
 
     /*
     |--------------------------------------------------------------------------
@@ -148,8 +147,7 @@ export async function PATCH(
         (requiredType) =>
           !pandit.documents.some(
             (document) =>
-              document.documentType ===
-              requiredType
+              normalizePanditDocumentType(document.documentType) === requiredType
           )
       );
 
@@ -179,8 +177,7 @@ export async function PATCH(
           const document =
             pandit.documents.find(
               (item) =>
-                item.documentType ===
-                requiredType
+                normalizePanditDocumentType(item.documentType) === requiredType
             );
 
           return (

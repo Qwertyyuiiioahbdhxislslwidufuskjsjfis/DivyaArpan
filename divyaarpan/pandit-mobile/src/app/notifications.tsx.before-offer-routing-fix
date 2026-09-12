@@ -1,0 +1,1228 @@
+import {
+  Ionicons,
+} from "@expo/vector-icons";
+import {
+  router,
+  useFocusEffect,
+} from "expo-router";
+import React, {
+  useCallback,
+  useState,
+} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
+import PanditShell from "@/components/pandit/PanditShell";
+import {
+  Colors,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+import {
+  panditApiFetch,
+} from "@/lib/api";
+
+type NotificationItem = {
+  id: number;
+  panditId: number;
+  type: string;
+  title: string;
+  message: string;
+  eventKey: string;
+  bookingId: number | null;
+  offerId: number | null;
+  isRead: boolean;
+  createdAt: string;
+  publicBookingId:
+    | string
+    | null;
+};
+
+type NotificationsResponse = {
+  notifications:
+    NotificationItem[];
+  unreadCount: number;
+  message?: string;
+};
+
+function getIcon(
+  type: string
+): keyof typeof Ionicons.glyphMap {
+  if (
+    type ===
+      "BOOKING_OFFER" ||
+    type.includes("OFFER")
+  ) {
+    return "document-text-outline";
+  }
+
+  if (
+    type.includes(
+      "PAYMENT"
+    )
+  ) {
+    return "wallet-outline";
+  }
+
+  if (
+    type.includes(
+      "BOOKING"
+    )
+  ) {
+    return "calendar-outline";
+  }
+
+  return "notifications-outline";
+}
+
+function getIconColor(
+  type: string
+) {
+  if (
+    type ===
+      "BOOKING_OFFER" ||
+    type.includes("OFFER")
+  ) {
+    return Colors.primary;
+  }
+
+  if (
+    type.includes(
+      "PAYMENT"
+    )
+  ) {
+    return Colors.warning;
+  }
+
+  if (
+    type.includes(
+      "COMPLETED"
+    )
+  ) {
+    return Colors.success;
+  }
+
+  return Colors.primaryDark;
+}
+
+function formatTime(
+  value: string
+) {
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  const now =
+    new Date();
+
+  const diff =
+    Math.max(
+      0,
+      now.getTime() -
+        date.getTime()
+    );
+
+  const minutes =
+    Math.floor(
+      diff / 60000
+    );
+
+  if (minutes < 1) {
+    return "Just now";
+  }
+
+  if (minutes < 60) {
+    return `${minutes} min ago`;
+  }
+
+  const hours =
+    Math.floor(
+      minutes / 60
+    );
+
+  if (hours < 24) {
+    return `${hours} hr${
+      hours === 1
+        ? ""
+        : "s"
+    } ago`;
+  }
+
+  const days =
+    Math.floor(
+      hours / 24
+    );
+
+  if (days === 1) {
+    return "Yesterday";
+  }
+
+  if (days < 7) {
+    return `${days} days ago`;
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }
+  );
+}
+
+export default function NotificationsScreen() {
+  const [
+    notifications,
+    setNotifications,
+  ] = useState<
+    NotificationItem[]
+  >([]);
+
+  const [
+    unreadCount,
+    setUnreadCount,
+  ] = useState(0);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
+  const [
+    updatingAll,
+    setUpdatingAll,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const loadNotifications =
+    useCallback(
+      async (
+        refresh = false
+      ) => {
+        if (refresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+
+        setError("");
+
+        try {
+          const response =
+            await panditApiFetch(
+              "/api/pandit/notifications"
+            );
+
+          const data =
+            (await response.json()) as
+              NotificationsResponse;
+
+          if (!response.ok) {
+            throw new Error(
+              data.message ||
+                "Unable to load notifications."
+            );
+          }
+
+          setNotifications(
+            Array.isArray(
+              data.notifications
+            )
+              ? data.notifications
+              : []
+          );
+
+          setUnreadCount(
+            Number(
+              data.unreadCount ??
+                0
+            )
+          );
+        } catch (err) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Unable to load notifications.";
+
+          if (
+            message ===
+              "AUTH_REQUIRED" ||
+            message ===
+              "SESSION_EXPIRED"
+          ) {
+            router.replace("/");
+            return;
+          }
+
+          setError(message);
+        } finally {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      },
+      []
+    );
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadNotifications();
+    }, [loadNotifications])
+  );
+
+  async function markRead(
+    item:
+      NotificationItem
+  ) {
+    if (item.isRead) {
+      return;
+    }
+
+    try {
+      const response =
+        await panditApiFetch(
+          "/api/pandit/notifications",
+          {
+            method: "PATCH",
+            body: JSON.stringify({
+              notificationId:
+                item.id,
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to update notification."
+        );
+      }
+
+      setNotifications(
+        (items) =>
+          items.map(
+            (
+              notification
+            ) =>
+              notification.id ===
+              item.id
+                ? {
+                    ...notification,
+                    isRead: true,
+                  }
+                : notification
+          )
+      );
+
+      setUnreadCount(
+        Number(
+          data.unreadCount ??
+            Math.max(
+              0,
+              unreadCount - 1
+            )
+        )
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to update notification.";
+
+      if (
+        message ===
+          "AUTH_REQUIRED" ||
+        message ===
+          "SESSION_EXPIRED"
+      ) {
+        router.replace("/");
+        return;
+      }
+
+      Alert.alert(
+        "Unable to Update",
+        message
+      );
+    }
+  }
+
+  async function markAllRead() {
+    if (
+      unreadCount === 0 ||
+      updatingAll
+    ) {
+      return;
+    }
+
+    setUpdatingAll(true);
+
+    try {
+      const response =
+        await panditApiFetch(
+          "/api/pandit/notifications",
+          {
+            method: "PATCH",
+            body: JSON.stringify({
+              action:
+                "mark-all-read",
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to mark notifications as read."
+        );
+      }
+
+      setNotifications(
+        (items) =>
+          items.map(
+            (item) => ({
+              ...item,
+              isRead: true,
+            })
+          )
+      );
+
+      setUnreadCount(0);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to update notifications.";
+
+      if (
+        message ===
+          "AUTH_REQUIRED" ||
+        message ===
+          "SESSION_EXPIRED"
+      ) {
+        router.replace("/");
+        return;
+      }
+
+      Alert.alert(
+        "Unable to Update",
+        message
+      );
+    } finally {
+      setUpdatingAll(false);
+    }
+  }
+
+  async function openNotification(
+    item:
+      NotificationItem
+  ) {
+    await markRead(item);
+
+    if (
+      item.type ===
+        "BOOKING_OFFER" &&
+      item.offerId
+    ) {
+      router.push({
+        pathname:
+          "/requests/[id]",
+        params: {
+          id: String(
+            item.offerId
+          ),
+        },
+      });
+
+      return;
+    }
+
+    if (
+      item.publicBookingId
+    ) {
+      router.push({
+        pathname:
+          "/bookings/[id]",
+        params: {
+          id:
+            item.publicBookingId,
+        },
+      });
+    }
+  }
+
+  return (
+    <PanditShell
+      activeTab="notifications"
+      notificationCount={
+        unreadCount
+      }
+      onTabPress={(tab) => {
+        if (tab === "home") {
+          router.replace(
+            "/dashboard"
+          );
+        }
+
+        if (
+          tab === "requests"
+        ) {
+          router.replace(
+            "/requests"
+          );
+        }
+
+        if (
+          tab === "bookings"
+        ) {
+          router.replace(
+            "/bookings"
+          );
+        }
+
+        if (
+          tab ===
+          "notifications"
+        ) {
+          router.replace(
+            "/notifications"
+          );
+        }
+
+        if (
+          tab === "profile"
+        ) {
+          router.replace(
+            "/profile"
+          );
+        }
+      }}
+    >
+      <SafeAreaView
+        style={styles.safeArea}
+      >
+        <ScrollView
+          contentContainerStyle={
+            styles.content
+          }
+          showsVerticalScrollIndicator={
+            false
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={
+                refreshing
+              }
+              onRefresh={() =>
+                void loadNotifications(
+                  true
+                )
+              }
+            />
+          }
+        >
+          <View
+            style={
+              styles.headerRow
+            }
+          >
+            <View
+              style={
+                styles.headerText
+              }
+            >
+              <Text
+                style={
+                  styles.title
+                }
+              >
+                Alerts
+              </Text>
+
+              <Text
+                style={
+                  styles.subtitle
+                }
+              >
+                Stay updated with
+                your DivyaArpan
+                activities
+              </Text>
+            </View>
+
+            {unreadCount >
+              0 && (
+              <Pressable
+                disabled={
+                  updatingAll
+                }
+                onPress={() =>
+                  void markAllRead()
+                }
+                style={
+                  styles.markReadButton
+                }
+              >
+                <Text
+                  style={
+                    styles.markReadText
+                  }
+                >
+                  {updatingAll
+                    ? "Updating..."
+                    : "Mark all read"}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          {unreadCount >
+            0 && (
+            <View
+              style={
+                styles.summaryCard
+              }
+            >
+              <View
+                style={
+                  styles.summaryIcon
+                }
+              >
+                <Ionicons
+                  name="notifications-outline"
+                  size={21}
+                  color={
+                    Colors.primaryDark
+                  }
+                />
+              </View>
+
+              <View
+                style={
+                  styles.summaryText
+                }
+              >
+                <Text
+                  style={
+                    styles.summaryTitle
+                  }
+                >
+                  {unreadCount}{" "}
+                  unread alert
+                  {unreadCount >
+                  1
+                    ? "s"
+                    : ""}
+                </Text>
+
+                <Text
+                  style={
+                    styles.summarySubtitle
+                  }
+                >
+                  Tap an alert to
+                  view more details.
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {error ? (
+            <View
+              style={
+                styles.errorCard
+              }
+            >
+              <Ionicons
+                name="alert-circle-outline"
+                size={22}
+                color={
+                  Colors.error
+                }
+              />
+
+              <Text
+                style={
+                  styles.errorText
+                }
+              >
+                {error}
+              </Text>
+
+              <Pressable
+                onPress={() =>
+                  void loadNotifications()
+                }
+              >
+                <Text
+                  style={
+                    styles.retryText
+                  }
+                >
+                  Retry
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          <Text
+            style={
+              styles.sectionTitle
+            }
+          >
+            Recent Alerts
+          </Text>
+
+          {loading &&
+          notifications.length ===
+            0 ? (
+            <View
+              style={
+                styles.loadingCard
+              }
+            >
+              <ActivityIndicator
+                size="large"
+                color={
+                  Colors.primary
+                }
+              />
+
+              <Text
+                style={
+                  styles.loadingText
+                }
+              >
+                Loading alerts...
+              </Text>
+            </View>
+          ) : notifications.length ===
+            0 ? (
+            <View
+              style={
+                styles.emptyCard
+              }
+            >
+              <Ionicons
+                name="notifications-off-outline"
+                size={32}
+                color={
+                  Colors.textMuted
+                }
+              />
+
+              <Text
+                style={
+                  styles.emptyTitle
+                }
+              >
+                No alerts yet
+              </Text>
+
+              <Text
+                style={
+                  styles.emptyText
+                }
+              >
+                Booking,
+                verification and
+                account updates will
+                appear here.
+              </Text>
+            </View>
+          ) : (
+            <View
+              style={styles.list}
+            >
+              {notifications.map(
+                (item) => (
+                  <Pressable
+                    key={item.id}
+                    onPress={() =>
+                      void openNotification(
+                        item
+                      )
+                    }
+                    style={({
+                      pressed,
+                    }) => [
+                      styles.notificationCard,
+                      !item.isRead &&
+                        styles.unreadCard,
+                      pressed &&
+                        styles.pressed,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.notificationIcon,
+                        !item.isRead &&
+                          styles.unreadIcon,
+                      ]}
+                    >
+                      <Ionicons
+                        name={getIcon(
+                          item.type
+                        )}
+                        size={22}
+                        color={getIconColor(
+                          item.type
+                        )}
+                      />
+                    </View>
+
+                    <View
+                      style={
+                        styles.notificationBody
+                      }
+                    >
+                      <View
+                        style={
+                          styles.titleRow
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.notificationTitle,
+                            !item.isRead &&
+                              styles.notificationTitleUnread,
+                          ]}
+                        >
+                          {
+                            item.title
+                          }
+                        </Text>
+
+                        {!item.isRead && (
+                          <View
+                            style={
+                              styles.unreadDot
+                            }
+                          />
+                        )}
+                      </View>
+
+                      <Text
+                        style={
+                          styles.message
+                        }
+                      >
+                        {
+                          item.message
+                        }
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.time
+                        }
+                      >
+                        {formatTime(
+                          item.createdAt
+                        )}
+                      </Text>
+                    </View>
+
+                    {(item.offerId ||
+                      item.publicBookingId) && (
+                      <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color={
+                          Colors.textMuted
+                        }
+                      />
+                    )}
+                  </Pressable>
+                )
+              )}
+            </View>
+          )}
+
+          <View
+            style={
+              styles.infoCard
+            }
+          >
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={21}
+              color={
+                Colors.primaryDark
+              }
+            />
+
+            <View
+              style={
+                styles.infoText
+              }
+            >
+              <Text
+                style={
+                  styles.infoTitle
+                }
+              >
+                DivyaArpan Partner
+                Alerts
+              </Text>
+
+              <Text
+                style={
+                  styles.infoDescription
+                }
+              >
+                Important booking,
+                verification and
+                payment updates will
+                appear here.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </PanditShell>
+  );
+}
+
+const styles =
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor:
+        Colors.background,
+    },
+
+    content: {
+      padding: Spacing.lg,
+      paddingBottom: 120,
+    },
+
+    headerRow: {
+      flexDirection: "row",
+      alignItems:
+        "flex-start",
+      justifyContent:
+        "space-between",
+      marginBottom:
+        Spacing.lg,
+    },
+
+    headerText: {
+      flex: 1,
+    },
+
+    title: {
+      fontSize: 28,
+      fontWeight: "800",
+      color: Colors.text,
+    },
+
+    subtitle: {
+      marginTop: 4,
+      fontSize: 14,
+      color:
+        Colors.textSecondary,
+    },
+
+    markReadButton: {
+      marginLeft: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 9,
+      borderRadius:
+        Radius.pill,
+      backgroundColor:
+        Colors.primarySoft,
+    },
+
+    markReadText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color:
+        Colors.primaryDark,
+    },
+
+    summaryCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding:
+        Spacing.lg,
+      marginBottom:
+        Spacing.xl,
+      borderRadius:
+        Radius.lg,
+      backgroundColor:
+        Colors.primarySoft,
+      borderWidth: 1,
+      borderColor:
+        "#f5d9a5",
+    },
+
+    summaryIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: "center",
+      justifyContent:
+        "center",
+      backgroundColor:
+        Colors.white,
+    },
+
+    summaryText: {
+      flex: 1,
+      marginLeft:
+        Spacing.md,
+    },
+
+    summaryTitle: {
+      fontSize: 15,
+      fontWeight: "800",
+      color:
+        Colors.primaryDark,
+    },
+
+    summarySubtitle: {
+      marginTop: 2,
+      fontSize: 12,
+      color:
+        Colors.textSecondary,
+    },
+
+    sectionTitle: {
+      marginBottom:
+        Spacing.md,
+      fontSize: 18,
+      fontWeight: "800",
+      color: Colors.text,
+    },
+
+    list: {
+      gap: Spacing.md,
+    },
+
+    notificationCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding:
+        Spacing.lg,
+      borderRadius:
+        Radius.lg,
+      backgroundColor:
+        Colors.surface,
+      borderWidth: 1,
+      borderColor:
+        Colors.border,
+    },
+
+    unreadCard: {
+      backgroundColor:
+        "#fffdf9",
+      borderColor:
+        "#ead5b1",
+    },
+
+    notificationIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      alignItems: "center",
+      justifyContent:
+        "center",
+      backgroundColor:
+        Colors.surfaceSoft,
+    },
+
+    unreadIcon: {
+      backgroundColor:
+        Colors.primarySoft,
+    },
+
+    notificationBody: {
+      flex: 1,
+      marginLeft:
+        Spacing.md,
+      marginRight: 8,
+    },
+
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    notificationTitle: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: "700",
+      color: Colors.text,
+    },
+
+    notificationTitleUnread: {
+      fontWeight: "800",
+    },
+
+    unreadDot: {
+      width: 8,
+      height: 8,
+      marginLeft: 8,
+      borderRadius: 4,
+      backgroundColor:
+        Colors.error,
+    },
+
+    message: {
+      marginTop: 5,
+      fontSize: 13,
+      lineHeight: 19,
+      color:
+        Colors.textSecondary,
+    },
+
+    time: {
+      marginTop: 8,
+      fontSize: 11,
+      fontWeight: "600",
+      color:
+        Colors.textMuted,
+    },
+
+    infoCard: {
+      flexDirection: "row",
+      marginTop:
+        Spacing.xl,
+      padding:
+        Spacing.lg,
+      borderRadius:
+        Radius.lg,
+      backgroundColor:
+        "#fff7ed",
+      borderWidth: 1,
+      borderColor:
+        "#fed7aa",
+    },
+
+    infoText: {
+      flex: 1,
+      marginLeft:
+        Spacing.md,
+    },
+
+    infoTitle: {
+      fontSize: 14,
+      fontWeight: "800",
+      color:
+        Colors.primaryDark,
+    },
+
+    infoDescription: {
+      marginTop: 4,
+      fontSize: 12,
+      lineHeight: 18,
+      color:
+        Colors.textSecondary,
+    },
+
+    loadingCard: {
+      minHeight: 180,
+      alignItems: "center",
+      justifyContent:
+        "center",
+      gap: 12,
+    },
+
+    loadingText: {
+      fontSize: 12,
+      color:
+        Colors.textSecondary,
+    },
+
+    emptyCard: {
+      alignItems: "center",
+      padding:
+        Spacing.xl,
+      borderRadius:
+        Radius.lg,
+      backgroundColor:
+        Colors.surface,
+      borderWidth: 1,
+      borderColor:
+        Colors.border,
+    },
+
+    emptyTitle: {
+      marginTop: 9,
+      fontSize: 15,
+      fontWeight: "800",
+      color: Colors.text,
+    },
+
+    emptyText: {
+      marginTop: 4,
+      textAlign: "center",
+      fontSize: 12,
+      lineHeight: 18,
+      color:
+        Colors.textSecondary,
+    },
+
+    errorCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom:
+        Spacing.md,
+      padding:
+        Spacing.md,
+      borderRadius:
+        Radius.md,
+      backgroundColor:
+        "#FFF5F5",
+    },
+
+    errorText: {
+      flex: 1,
+      fontSize: 11,
+      color:
+        Colors.textSecondary,
+    },
+
+    retryText: {
+      fontSize: 11,
+      fontWeight: "800",
+      color:
+        Colors.primary,
+    },
+
+    pressed: {
+      opacity: 0.75,
+    },
+  });

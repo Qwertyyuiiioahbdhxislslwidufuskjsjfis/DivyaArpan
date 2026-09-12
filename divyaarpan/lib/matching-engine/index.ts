@@ -9,7 +9,6 @@ export async function runMatchingEngine(bookingId: number) {
   console.log("DIVYAARPAN SMART MATCH ENGINE STARTED");
   console.log("======================================");
 
-  // Fetch booking
   const booking = await prisma.panditBooking.findUnique({
     where: {
       id: bookingId,
@@ -20,17 +19,29 @@ export async function runMatchingEngine(bookingId: number) {
     throw new Error("Booking not found.");
   }
 
-  console.log("Booking ID :", booking.bookingId);
+  console.log("Booking ID:", booking.bookingId);
 
-  // Step 1
+  // Do not start another round for an already assigned booking.
+  if (booking.panditId) {
+    console.log("Booking already assigned. Matching stopped.");
+    return [];
+  }
+
+  // Find only Pandits who have NOT already received an offer
+  // for this booking.
   const eligiblePandits = await findEligiblePandits({
+    bookingId: booking.id,
     city: booking.city,
+    pincode: booking.pincode,
     service: booking.service,
     language: booking.language,
+    bookingType: booking.bookingType,
+    date: booking.date,
+    time: booking.time,
   });
 
   if (eligiblePandits.length === 0) {
-    console.log("❌ No eligible pandits found.");
+    console.log("❌ No new eligible Pandits found.");
 
     await prisma.panditBooking.update({
       where: {
@@ -41,13 +52,20 @@ export async function runMatchingEngine(bookingId: number) {
       },
     });
 
+    await prisma.panditBookingStatusHistory.create({
+      data: {
+        bookingId: booking.id,
+        fromStatus: booking.status,
+        toStatus: "NO_PANDIT_AVAILABLE",
+        actorRole: "SYSTEM",
+      },
+    });
+
     return [];
   }
 
-  // Step 2
   const rankedPandits = rankPandits(eligiblePandits);
 
-  // Step 3
   const offers = await dispatchBookingOffers(
     booking.id,
     rankedPandits
@@ -55,15 +73,43 @@ export async function runMatchingEngine(bookingId: number) {
 
   if (offers.length === 0) {
     await prisma.panditBooking.update({
-      where: { id: booking.id },
-      data: { status: "NO_PANDIT_AVAILABLE" },
+      where: {
+        id: booking.id,
+      },
+      data: {
+        status: "NO_PANDIT_AVAILABLE",
+      },
     });
+
+    await prisma.panditBookingStatusHistory.create({
+      data: {
+        bookingId: booking.id,
+        fromStatus: booking.status,
+        toStatus: "NO_PANDIT_AVAILABLE",
+        actorRole: "SYSTEM",
+      },
+    });
+
     return offers;
+  }
+
+  // Make sure the booking remains in SEARCHING state
+  // while the current offer round is active.
+  if (booking.status !== "SEARCHING") {
+    await prisma.panditBooking.update({
+      where: {
+        id: booking.id,
+      },
+      data: {
+        status: "SEARCHING",
+        searchStartedAt: booking.searchStartedAt ?? new Date(),
+      },
+    });
   }
 
   console.log("======================================");
   console.log("MATCHING COMPLETED");
-  console.log("Offers Created :", offers.length);
+  console.log("Offers Created:", offers.length);
   console.log("======================================");
 
   return offers;

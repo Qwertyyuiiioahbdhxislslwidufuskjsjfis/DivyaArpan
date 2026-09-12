@@ -1403,9 +1403,7 @@ export default function EditPanditPage() {
                     </div>
 
                     <a
-                      href={
-                        document.documentUrl
-                      }
+                      href={`/api/pandits/${id}/documents/${document.id}/view`}
                       target="_blank"
                       rel="noreferrer"
                       className="rounded-xl border border-orange-200 px-5 py-2.5 text-center font-semibold text-orange-700 hover:bg-orange-50"
@@ -1656,7 +1654,7 @@ function formatDocumentType(
       "Temple / Guru / Organisation Reference",
 
     PARTNER_AGREEMENT:
-      "DivyaArpan Pandit Partner Agreement",
+      "DivyaDarpan Pandit Partner Agreement",
   };
 
   return (

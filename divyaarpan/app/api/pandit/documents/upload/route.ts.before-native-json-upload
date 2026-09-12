@@ -1,0 +1,250 @@
+import { NextResponse } from "next/server";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
+import crypto from "crypto";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUserFromRequest } from "@/app/lib/auth";
+import { addMobileCors } from "@/app/lib/mobile-cors";
+import { normalizePanditDocumentType } from "@/app/lib/pandit-documents";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "application/pdf",
+];
+
+function getExtension(type: string) {
+  switch (type) {
+    case "image/jpeg":
+      return ".jpg";
+    case "image/png":
+      return ".png";
+    case "application/pdf":
+      return ".pdf";
+    default:
+      return "";
+  }
+}
+
+export async function OPTIONS() {
+  return addMobileCors(
+    new NextResponse(null, { status: 204 })
+  );
+}
+
+export async function GET(request: Request) {
+  try {
+    const user =
+      await getCurrentUserFromRequest(request);
+
+    if (
+      !user ||
+      user.role !== "PANDIT" ||
+      !user.panditId
+    ) {
+      return addMobileCors(
+        NextResponse.json(
+          {
+            message:
+              "Pandit authentication required.",
+          },
+          { status: 403 }
+        )
+      );
+    }
+
+    const documents =
+      await prisma.panditDocument.findMany({
+        where: {
+          panditId: user.panditId,
+        },
+        select: {
+          id: true,
+          documentType: true,
+          documentNumber: true,
+          isVerified: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+    return addMobileCors(
+      NextResponse.json({
+        documents,
+      })
+    );
+  } catch (error) {
+    console.error(
+      "Pandit document status failed:",
+      error
+    );
+
+    return addMobileCors(
+      NextResponse.json(
+        {
+          message:
+            "Failed to load document status.",
+        },
+        { status: 500 }
+      )
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const user = await getCurrentUserFromRequest(request);
+
+    if (
+      !user ||
+      user.role !== "PANDIT" ||
+      !user.panditId
+    ) {
+      return addMobileCors(
+        NextResponse.json(
+          { message: "Pandit authentication required." },
+          { status: 403 }
+        )
+      );
+    }
+
+    const formData = await request.formData();
+
+    const file = Reflect.get(formData, "get").call(
+      formData,
+      "file"
+    ) as FormDataEntryValue | null;
+
+    const documentType = Reflect.get(formData, "get").call(
+      formData,
+      "documentType"
+    ) as FormDataEntryValue | null;
+
+    if (!(file instanceof File)) {
+      return addMobileCors(
+        NextResponse.json(
+          { message: "Please select a document." },
+          { status: 400 }
+        )
+      );
+    }
+
+    const normalizedDocumentType = normalizePanditDocumentType(documentType);
+    if (!normalizedDocumentType) {
+      return addMobileCors(
+        NextResponse.json(
+          { message: "A valid document type is required." },
+          { status: 400 }
+        )
+      );
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return addMobileCors(
+        NextResponse.json(
+          { message: "Only PDF, JPG and PNG documents are allowed." },
+          { status: 400 }
+        )
+      );
+    }
+
+    if (file.size === 0) {
+      return addMobileCors(
+        NextResponse.json(
+          { message: "The selected document is empty." },
+          { status: 400 }
+        )
+      );
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return addMobileCors(
+        NextResponse.json(
+          { message: "Document size must not exceed 5 MB." },
+          { status: 400 }
+        )
+      );
+    }
+
+    const safeDocumentType = normalizedDocumentType
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    const fileName =
+      `${safeDocumentType}-${crypto.randomUUID()}${getExtension(file.type)}`;
+
+    const uploadDirectory = path.join(
+      process.cwd(),
+      "uploads",
+      "pandits",
+      "private"
+    );
+
+    await mkdir(uploadDirectory, { recursive: true });
+
+    const filePath = path.join(uploadDirectory, fileName);
+
+    const bytes = await file.arrayBuffer();
+    await writeFile(filePath, Buffer.from(bytes));
+
+    const documentNumber = Reflect.get(
+      formData,
+      "get"
+    ).call(
+      formData,
+      "documentNumber"
+    ) as FormDataEntryValue | null;
+    const documentData = {
+      documentUrl: `private://${fileName}`,
+      documentNumber:
+        typeof documentNumber === "string" && documentNumber.trim()
+          ? documentNumber.trim()
+          : null,
+      isVerified: false,
+    };
+    const existingDocument = await prisma.panditDocument.findFirst({
+      where: { panditId: user.panditId, documentType: normalizedDocumentType },
+      select: { id: true },
+    });
+    const document = existingDocument
+      ? await prisma.panditDocument.update({
+          where: { id: existingDocument.id },
+          data: documentData,
+        })
+      : await prisma.panditDocument.create({
+          data: {
+        panditId: user.panditId,
+            documentType: normalizedDocumentType,
+            ...documentData,
+          },
+        });
+
+    return addMobileCors(
+      NextResponse.json(
+        {
+          success: true,
+          documentId: document.id,
+          documentUrl: `/api/pandits/${user.panditId}/documents/${document.id}/view`,
+          fileName,
+          documentType: normalizedDocumentType,
+        },
+        { status: 201 }
+      )
+    );
+  } catch (error) {
+    console.error("Pandit document upload failed:", error);
+
+    return addMobileCors(
+      NextResponse.json(
+        { message: "Failed to upload document." },
+        { status: 500 }
+      )
+    );
+  }
+}
