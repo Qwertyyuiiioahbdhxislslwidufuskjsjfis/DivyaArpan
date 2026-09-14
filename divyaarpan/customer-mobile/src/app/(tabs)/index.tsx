@@ -1,89 +1,83 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
-  Animated,
+  Image,
+  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 
 import { DivyaTheme } from "@/constants/divya-theme";
-import { SectionTitle } from "@/components/divya/SectionTitle";
-import { DivyaDhwaniButton } from "@/components/divya/DivyaDhwaniButton";
+
+const quickActions = [
+  {
+    title: "Book\nPandit",
+    icon: "person-outline" as const,
+    route: "/bookings",
+  },
+  {
+    title: "Temple\nPooja",
+    icon: "business-outline" as const,
+    route: "/temples",
+  },
+  {
+    title: "Arpan\nSeva",
+    icon: "flower-outline" as const,
+    route: "/poojas",
+  },
+  {
+    title: "Ask\nPandit",
+    icon: "chatbubble-ellipses-outline" as const,
+    route: "/bookings",
+  },
+];
 
 const temples = [
   {
     name: "Kashi Vishwanath",
     place: "Varanasi",
-    famous: "Jyotirlinga • Rudrabhishek",
-    icon: "🕉️",
+    image:
+      "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=900&q=85",
   },
   {
     name: "Mahakaleshwar",
     place: "Ujjain",
-    famous: "Bhasma Aarti • Jyotirlinga",
-    icon: "🔱",
+    image:
+      "https://images.unsplash.com/photo-1600100397608-f010f5c0a56d?auto=format&fit=crop&w=900&q=85",
   },
   {
     name: "Siddhivinayak",
     place: "Mumbai",
-    famous: "Ganesh Darshan • Sankashti",
-    icon: "🌺",
+    image:
+      "https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=900&q=85",
   },
 ];
 
 const poojas = [
   {
     title: "Rudrabhishek",
-    subtitle: "Shiva worship & sacred abhishek",
-    icon: "🔱",
+    subtitle: "For peace & prosperity",
+    icon: "water-outline" as const,
   },
   {
     title: "Satyanarayan Pooja",
-    subtitle: "Gratitude, blessings & wellbeing",
-    icon: "🪔",
+    subtitle: "For gratitude & wellbeing",
+    icon: "flame-outline" as const,
   },
   {
     title: "Griha Pravesh",
-    subtitle: "Sacred beginning for a new home",
-    icon: "🏠",
+    subtitle: "For a new beginning",
+    icon: "home-outline" as const,
   },
 ];
 
 export default function HomeScreen() {
-  const glow = useRef(new Animated.Value(0)).current;
-  const [soundEnabled, setSoundEnabled] = useState(false);
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, {
-          toValue: 1,
-          duration: 2600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glow, {
-          toValue: 0,
-          duration: 2600,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [glow]);
-
-  const glowScale = glow.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.12],
-  });
-
-  const glowOpacity = glow.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.28, 0.55],
-  });
+  const greeting = useMemo(() => "Good Morning", []);
 
   return (
     <View style={styles.screen}>
@@ -91,87 +85,153 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        <LinearGradient
-          colors={["#FFF1D8", "#F7C982", "#E99343"]}
-          start={{ x: 0.05, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.glow,
-              {
-                opacity: glowOpacity,
-                transform: [{ scale: glowScale }],
-              },
-            ]}
-          />
-
-          <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.greeting}>Namaste 🙏</Text>
-              <Text style={styles.heroTitle}>Begin with devotion.</Text>
+        <View style={styles.topbar}>
+          <View style={styles.brandBlock}>
+            <View style={styles.logoMark}>
+              <Ionicons
+                name="flower-outline"
+                size={25}
+                color={DivyaTheme.colors.goldDeep}
+              />
             </View>
 
-            <DivyaDhwaniButton
-              enabled={soundEnabled}
-              onPress={() => setSoundEnabled((current) => !current)}
-            />
+            <View>
+              <Text style={styles.brand}>DivyaArpan</Text>
+              <Text style={styles.greeting}>{greeting}, Chandraprakash</Text>
+            </View>
           </View>
 
-          <View style={styles.spiritualCard}>
-            <Text style={styles.spiritualEyebrow}>TODAY'S SPIRITUAL GUIDE</Text>
-            <Text style={styles.spiritualTitle}>
-              A peaceful evening for prayer
-            </Text>
-            <Text style={styles.spiritualBody}>
-              Explore a temple, understand a sacred ritual, or begin your
-              Sankalp with a verified Pandit.
-            </Text>
-          </View>
-
-          <View style={styles.heroActions}>
-            <Pressable style={styles.primaryAction}>
-              <Ionicons name="person-add-outline" size={21} color="#FFFFFF" />
-              <View>
-                <Text style={styles.primaryActionTitle}>Book a Pandit</Text>
-                <Text style={styles.primaryActionSub}>
-                  Home • Temple • Online
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable style={styles.secondaryAction}>
+          <View style={styles.headerActions}>
+            <Pressable style={styles.roundButton}>
               <Ionicons
-                name="business-outline"
-                size={21}
-                color={DivyaTheme.colors.maroon}
+                name="notifications-outline"
+                size={20}
+                color={DivyaTheme.colors.burgundy}
               />
-              <Text style={styles.secondaryActionText}>Explore Temples</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.avatar}
+              onPress={() => router.push("/profile")}
+            >
+              <Ionicons name="person" size={18} color="#FFFFFF" />
             </Pressable>
           </View>
-        </LinearGradient>
+        </View>
 
-        <View style={styles.liveCard}>
-          <View style={styles.liveIndicator} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.liveTitle}>Pandits available near you</Text>
-            <Text style={styles.liveSubtitle}>
-              Live availability will update from DivyaArpan
-            </Text>
-          </View>
+        <View style={styles.locationRow}>
           <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={DivyaTheme.colors.saffronDark}
+            name="location-outline"
+            size={15}
+            color={DivyaTheme.colors.goldDeep}
+          />
+          <Text style={styles.location}>Mumbai, Maharashtra</Text>
+          <Ionicons
+            name="chevron-down"
+            size={14}
+            color={DivyaTheme.colors.muted}
           />
         </View>
 
-        <SectionTitle
-          eyebrow="Sacred India"
-          title="Temples to discover"
-          action="View all"
+        <ImageBackground
+          source={{
+            uri: "https://images.unsplash.com/photo-1624454002302-36b824d7bd0a?auto=format&fit=crop&w=1400&q=90",
+          }}
+          imageStyle={styles.heroImage}
+          style={styles.hero}
+        >
+          <LinearGradient
+            colors={[
+              "rgba(70,20,29,0.18)",
+              "rgba(70,20,29,0.32)",
+              "rgba(55,14,24,0.76)",
+            ]}
+            style={styles.heroOverlay}
+          >
+            <View style={styles.heroTop}>
+              <View style={styles.heroPill}>
+                <Ionicons
+                  name="sunny-outline"
+                  size={14}
+                  color={DivyaTheme.colors.goldLight}
+                />
+                <Text style={styles.heroPillText}>TODAY WITH DIVYAARPAN</Text>
+              </View>
+            </View>
+
+            <View style={styles.heroCopy}>
+              <Text style={styles.heroTitle}>
+                Begin your day{"\n"}
+                with devotion.
+              </Text>
+
+              <Text style={styles.heroBody}>
+                Sacred temples. Authentic poojas. Verified Pandits.
+              </Text>
+
+              <Pressable
+                style={styles.heroButton}
+                onPress={() => router.push("/temples")}
+              >
+                <Text style={styles.heroButtonText}>Explore Now</Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={17}
+                  color={DivyaTheme.colors.burgundyDeep}
+                />
+              </Pressable>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+
+        <View style={styles.searchBar}>
+          <Ionicons
+            name="search-outline"
+            size={19}
+            color={DivyaTheme.colors.muted}
+          />
+
+          <Text style={styles.searchPlaceholder}>
+            Search temples, poojas, pandits...
+          </Text>
+
+          <View style={styles.searchFilter}>
+            <Ionicons
+              name="options-outline"
+              size={18}
+              color={DivyaTheme.colors.burgundy}
+            />
+          </View>
+        </View>
+
+        <View style={styles.quickGrid}>
+          {quickActions.map((item) => (
+            <Pressable
+              key={item.title}
+              style={styles.quickItem}
+              onPress={() => router.push(item.route as never)}
+            >
+              <LinearGradient
+                colors={["#FFF8EA", "#FFE9C6"]}
+                style={styles.quickIcon}
+              >
+                <Ionicons
+                  name={item.icon}
+                  size={24}
+                  color={DivyaTheme.colors.burgundy}
+                />
+              </LinearGradient>
+
+              <Text style={styles.quickText}>{item.title}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <SectionHeader
+          eyebrow="SACRED DESTINATIONS"
+          title="Popular Temples"
+          action="See All"
+          onPress={() => router.push("/temples")}
         />
 
         <ScrollView
@@ -180,96 +240,155 @@ export default function HomeScreen() {
           contentContainerStyle={styles.horizontalRow}
         >
           {temples.map((temple) => (
-            <Pressable key={temple.name} style={styles.templeCard}>
-              <LinearGradient
-                colors={["#FFF4DE", "#F6DEC2"]}
-                style={styles.templeVisual}
-              >
-                <Text style={styles.templeEmoji}>{temple.icon}</Text>
-              </LinearGradient>
+            <Pressable
+              key={temple.name}
+              style={styles.templeCard}
+              onPress={() => router.push("/temples")}
+            >
+              <Image
+                source={{ uri: temple.image }}
+                style={styles.templeImage}
+              />
 
-              <Text style={styles.templeName}>{temple.name}</Text>
-              <Text style={styles.templePlace}>{temple.place}</Text>
+              <View style={styles.templeBody}>
+                <Text style={styles.templeName}>{temple.name}</Text>
 
-              <View style={styles.famousTag}>
-                <Text style={styles.famousText}>{temple.famous}</Text>
+                <View style={styles.templePlaceRow}>
+                  <Ionicons
+                    name="location-outline"
+                    size={13}
+                    color={DivyaTheme.colors.goldDeep}
+                  />
+                  <Text style={styles.templePlace}>{temple.place}</Text>
+                </View>
               </View>
-
-              <Text style={styles.discoverText}>Why this Mandir is famous →</Text>
             </Pressable>
           ))}
         </ScrollView>
 
-        <SectionTitle
-          eyebrow="Sacred Rituals"
+        <View style={styles.festivalCard}>
+          <LinearGradient
+            colors={["#6D182B", "#8F2C39", "#B45A3D"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.festivalGradient}
+          >
+            <View style={styles.festivalCopy}>
+              <Text style={styles.festivalEyebrow}>SPECIAL SEVA</Text>
+
+              <Text style={styles.festivalTitle}>
+                Offer your Sankalp{"\n"}from anywhere
+              </Text>
+
+              <Text style={styles.festivalBody}>
+                Let DivyaArpan help you offer prayers through trusted temples.
+              </Text>
+
+              <Pressable
+                style={styles.festivalButton}
+                onPress={() => router.push("/poojas")}
+              >
+                <Text style={styles.festivalButtonText}>Offer Arpan</Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={15}
+                  color={DivyaTheme.colors.burgundy}
+                />
+              </Pressable>
+            </View>
+
+            <View style={styles.festivalSymbol}>
+              <Text style={styles.om}>ॐ</Text>
+            </View>
+          </LinearGradient>
+        </View>
+
+        <SectionHeader
+          eyebrow="TRADITIONAL POOJAS"
           title="Popular Poojas"
           action="Explore"
+          onPress={() => router.push("/poojas")}
         />
 
         <View style={styles.poojaList}>
           {poojas.map((pooja) => (
-            <Pressable key={pooja.title} style={styles.poojaCard}>
+            <Pressable
+              key={pooja.title}
+              style={styles.poojaItem}
+              onPress={() => router.push("/poojas")}
+            >
               <View style={styles.poojaIcon}>
-                <Text style={{ fontSize: 25 }}>{pooja.icon}</Text>
+                <Ionicons
+                  name={pooja.icon}
+                  size={23}
+                  color={DivyaTheme.colors.saffronDark}
+                />
               </View>
 
-              <View style={{ flex: 1 }}>
+              <View style={styles.poojaText}>
                 <Text style={styles.poojaTitle}>{pooja.title}</Text>
                 <Text style={styles.poojaSubtitle}>{pooja.subtitle}</Text>
               </View>
 
               <Ionicons
                 name="chevron-forward"
-                size={20}
-                color={DivyaTheme.colors.gold}
+                size={19}
+                color={DivyaTheme.colors.goldDeep}
               />
             </Pressable>
           ))}
         </View>
 
-        <SectionTitle eyebrow="Offer with faith" title="Arpan" />
-
-        <LinearGradient
-          colors={["#682727", "#8A3C2C"]}
-          style={styles.arpanCard}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.arpanEyebrow}>DIVYA ARPAN</Text>
-            <Text style={styles.arpanTitle}>
-              Send your offering with Sankalp
-            </Text>
-            <Text style={styles.arpanBody}>
-              Flowers, diya, prasad and selected temple offerings.
-            </Text>
-
-            <Pressable style={styles.arpanButton}>
-              <Text style={styles.arpanButtonText}>Explore Arpan</Text>
-            </Pressable>
-          </View>
-
-          <Text style={styles.arpanEmoji}>🪔</Text>
-        </LinearGradient>
-
-        <SectionTitle eyebrow="Your Journey" title="Live booking" />
-
-        <View style={styles.emptyBooking}>
-          <View style={styles.emptyBookingIcon}>
-            <Ionicons
-              name="sparkles-outline"
-              size={25}
-              color={DivyaTheme.colors.saffron}
-            />
-          </View>
-
-          <Text style={styles.emptyBookingTitle}>No active booking yet</Text>
-          <Text style={styles.emptyBookingText}>
-            When you book a Pandit or temple pooja, its live journey will
-            appear here.
-          </Text>
+        <View style={styles.trustRow}>
+          <TrustItem icon="shield-checkmark-outline" text="Verified Pandits" />
+          <TrustItem icon="card-outline" text="Secure Payments" />
+          <TrustItem icon="language-outline" text="Multilingual" />
         </View>
-
-        <View style={{ height: 20 }} />
       </ScrollView>
+    </View>
+  );
+}
+
+function SectionHeader({
+  eyebrow,
+  title,
+  action,
+  onPress,
+}: {
+  eyebrow: string;
+  title: string;
+  action: string;
+  onPress: () => void;
+}) {
+  return (
+    <View style={styles.sectionHeader}>
+      <View>
+        <Text style={styles.sectionEyebrow}>{eyebrow}</Text>
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+
+      <Pressable onPress={onPress}>
+        <Text style={styles.sectionAction}>{action}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function TrustItem({
+  icon,
+  text,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+}) {
+  return (
+    <View style={styles.trustItem}>
+      <Ionicons
+        name={icon}
+        size={20}
+        color={DivyaTheme.colors.goldDeep}
+      />
+      <Text style={styles.trustText}>{text}</Text>
     </View>
   );
 }
@@ -281,338 +400,423 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingBottom: 28,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 120,
+  },
+
+  topbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  brandBlock: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  logoMark: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: DivyaTheme.colors.goldWash,
+  },
+
+  brand: {
+    color: DivyaTheme.colors.burgundy,
+    fontSize: 21,
+    fontWeight: "800",
+    letterSpacing: 0.2,
+  },
+
+  greeting: {
+    marginTop: 2,
+    color: DivyaTheme.colors.muted,
+    fontSize: 12,
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  roundButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: DivyaTheme.colors.border,
+  },
+
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: DivyaTheme.colors.burgundy,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  locationRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginLeft: 50,
+  },
+
+  location: {
+    color: DivyaTheme.colors.text,
+    fontSize: 12,
+    fontWeight: "600",
   },
 
   hero: {
-    margin: 14,
+    marginTop: 20,
+    height: 330,
     borderRadius: 30,
-    padding: 20,
-    paddingTop: 58,
     overflow: "hidden",
-    minHeight: 430,
+    backgroundColor: DivyaTheme.colors.backgroundDeep,
   },
 
-  glow: {
-    position: "absolute",
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: "#FFF8D8",
-    right: -60,
-    top: 95,
+  heroImage: {
+    borderRadius: 30,
+  },
+
+  heroOverlay: {
+    flex: 1,
+    padding: 22,
+    justifyContent: "space-between",
   },
 
   heroTop: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12,
   },
 
-  greeting: {
-    color: DivyaTheme.colors.maroon,
+  heroPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 99,
+    backgroundColor: "rgba(65,16,25,0.55)",
+  },
+
+  heroPillText: {
+    color: "#FFF2CD",
+    fontSize: 10,
     fontWeight: "800",
-    fontSize: 15,
+    letterSpacing: 1,
+  },
+
+  heroCopy: {
+    width: "88%",
   },
 
   heroTitle: {
-    color: DivyaTheme.colors.deep,
-    fontWeight: "900",
-    fontSize: 30,
-    marginTop: 4,
-    maxWidth: 220,
-  },
-
-  spiritualCard: {
-    backgroundColor: "rgba(255,255,255,0.73)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.85)",
-    padding: 17,
-    borderRadius: 22,
-    marginTop: 40,
-  },
-
-  spiritualEyebrow: {
-    color: DivyaTheme.colors.saffronDark,
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.3,
-  },
-
-  spiritualTitle: {
-    color: DivyaTheme.colors.deep,
-    fontSize: 19,
-    fontWeight: "900",
-    marginTop: 6,
-  },
-
-  spiritualBody: {
-    color: "#6B5142",
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 7,
-  },
-
-  heroActions: {
-    marginTop: 18,
-    gap: 10,
-  },
-
-  primaryAction: {
-    backgroundColor: DivyaTheme.colors.maroon,
-    borderRadius: 18,
-    paddingHorizontal: 17,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  primaryActionTitle: {
     color: "#FFFFFF",
-    fontWeight: "900",
-    fontSize: 15,
+    fontSize: 34,
+    lineHeight: 38,
+    fontWeight: "700",
   },
 
-  primaryActionSub: {
-    color: "#F0D9D9",
-    fontSize: 11,
-    marginTop: 2,
+  heroBody: {
+    marginTop: 11,
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 14,
+    lineHeight: 21,
   },
 
-  secondaryAction: {
-    backgroundColor: "rgba(255,255,255,0.77)",
-    borderRadius: 18,
-    paddingHorizontal: 17,
-    paddingVertical: 14,
+  heroButton: {
+    marginTop: 17,
+    alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
+    backgroundColor: "#F8DFA6",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 999,
   },
 
-  secondaryActionText: {
-    color: DivyaTheme.colors.maroon,
+  heroButtonText: {
+    color: DivyaTheme.colors.burgundyDeep,
+    fontSize: 13,
     fontWeight: "800",
   },
 
-  liveCard: {
-    marginHorizontal: 18,
-    marginTop: 5,
-    marginBottom: 30,
-    padding: 15,
+  searchBar: {
+    marginTop: -20,
+    marginHorizontal: 14,
+    minHeight: 54,
+    backgroundColor: "#FFFFFF",
     borderRadius: 18,
-    backgroundColor: DivyaTheme.colors.greenSoft,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: DivyaTheme.colors.border,
+    ...DivyaTheme.shadow.soft,
+  },
+
+  searchPlaceholder: {
+    flex: 1,
+    color: DivyaTheme.colors.muted,
+    fontSize: 13,
+  },
+
+  searchFilter: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: DivyaTheme.colors.goldWash,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  quickGrid: {
+    marginTop: 28,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  quickItem: {
+    width: "23%",
+    alignItems: "center",
+  },
+
+  quickIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#F1D9AC",
+  },
+
+  quickText: {
+    marginTop: 8,
+    textAlign: "center",
+    color: DivyaTheme.colors.text,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "700",
+  },
+
+  sectionHeader: {
+    marginTop: 32,
+    marginBottom: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+
+  sectionEyebrow: {
+    color: DivyaTheme.colors.goldDeep,
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+  },
+
+  sectionTitle: {
+    marginTop: 4,
+    color: DivyaTheme.colors.burgundyDeep,
+    fontSize: 22,
+    fontWeight: "800",
+  },
+
+  sectionAction: {
+    color: DivyaTheme.colors.burgundy,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  horizontalRow: {
     gap: 12,
+    paddingRight: 18,
   },
 
-  liveIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: DivyaTheme.colors.green,
+  templeCard: {
+    width: 180,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: DivyaTheme.colors.border,
+    ...DivyaTheme.shadow.soft,
   },
 
-  liveTitle: {
-    color: DivyaTheme.colors.deep,
+  templeImage: {
+    width: "100%",
+    height: 128,
+    backgroundColor: DivyaTheme.colors.backgroundDeep,
+  },
+
+  templeBody: {
+    padding: 12,
+  },
+
+  templeName: {
+    color: DivyaTheme.colors.burgundyDeep,
     fontSize: 14,
     fontWeight: "800",
   },
 
-  liveSubtitle: {
-    color: DivyaTheme.colors.muted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-
-  horizontalRow: {
-    paddingLeft: 18,
-    paddingRight: 8,
-    gap: 12,
-    marginBottom: 32,
-  },
-
-  templeCard: {
-    width: 230,
-    padding: 13,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: DivyaTheme.colors.border,
-  },
-
-  templeVisual: {
-    height: 125,
-    borderRadius: 17,
+  templePlaceRow: {
+    marginTop: 6,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-  },
-
-  templeEmoji: {
-    fontSize: 48,
-  },
-
-  templeName: {
-    color: DivyaTheme.colors.deep,
-    fontSize: 17,
-    fontWeight: "900",
-    marginTop: 13,
+    gap: 4,
   },
 
   templePlace: {
     color: DivyaTheme.colors.muted,
+    fontSize: 11,
+  },
+
+  festivalCard: {
+    marginTop: 30,
+    borderRadius: 25,
+    overflow: "hidden",
+  },
+
+  festivalGradient: {
+    minHeight: 210,
+    padding: 22,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  festivalCopy: {
+    flex: 1,
+  },
+
+  festivalEyebrow: {
+    color: "#F7DAA0",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+  },
+
+  festivalTitle: {
+    marginTop: 7,
+    color: "#FFFFFF",
+    fontSize: 22,
+    lineHeight: 27,
+    fontWeight: "800",
+  },
+
+  festivalBody: {
+    marginTop: 8,
+    color: "rgba(255,255,255,0.78)",
     fontSize: 12,
-    marginTop: 2,
+    lineHeight: 18,
   },
 
-  famousTag: {
+  festivalButton: {
+    marginTop: 14,
     alignSelf: "flex-start",
-    backgroundColor: "#FFF3E2",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    backgroundColor: "#FFE7B0",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    marginTop: 9,
   },
 
-  famousText: {
-    color: DivyaTheme.colors.saffronDark,
-    fontSize: 10,
+  festivalButtonText: {
+    color: DivyaTheme.colors.burgundy,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  festivalSymbol: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "rgba(255,228,171,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 12,
+  },
+
+  om: {
+    color: "#F7DAA0",
+    fontSize: 42,
     fontWeight: "700",
   },
 
-  discoverText: {
-    color: DivyaTheme.colors.maroon,
-    fontSize: 11,
-    fontWeight: "800",
-    marginTop: 12,
-  },
-
   poojaList: {
-    marginHorizontal: 18,
     gap: 10,
-    marginBottom: 32,
   },
 
-  poojaCard: {
+  poojaItem: {
+    minHeight: 74,
+    borderRadius: 18,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: DivyaTheme.colors.border,
-    padding: 14,
-    borderRadius: 20,
     flexDirection: "row",
     alignItems: "center",
-    gap: 13,
+    padding: 12,
   },
 
   poojaIcon: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: 16,
+    backgroundColor: DivyaTheme.colors.goldWash,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF2DE",
+  },
+
+  poojaText: {
+    flex: 1,
+    marginLeft: 12,
   },
 
   poojaTitle: {
-    color: DivyaTheme.colors.deep,
-    fontWeight: "900",
-    fontSize: 15,
+    color: DivyaTheme.colors.burgundyDeep,
+    fontSize: 14,
+    fontWeight: "800",
   },
 
   poojaSubtitle: {
-    color: DivyaTheme.colors.muted,
-    fontSize: 11,
     marginTop: 3,
-  },
-
-  arpanCard: {
-    marginHorizontal: 18,
-    marginBottom: 32,
-    padding: 20,
-    borderRadius: 25,
-    minHeight: 185,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  arpanEyebrow: {
-    color: "#F7C98C",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.3,
-  },
-
-  arpanTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "900",
-    marginTop: 7,
-    maxWidth: 230,
-  },
-
-  arpanBody: {
-    color: "#EED7D2",
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 7,
-    maxWidth: 230,
-  },
-
-  arpanButton: {
-    alignSelf: "flex-start",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    marginTop: 15,
-  },
-
-  arpanButtonText: {
-    color: DivyaTheme.colors.maroon,
-    fontWeight: "900",
+    color: DivyaTheme.colors.muted,
     fontSize: 11,
   },
 
-  arpanEmoji: {
-    fontSize: 52,
-    marginLeft: 8,
+  trustRow: {
+    marginTop: 30,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingTop: 22,
+    borderTopWidth: 1,
+    borderTopColor: DivyaTheme.colors.divider,
   },
 
-  emptyBooking: {
-    marginHorizontal: 18,
-    marginBottom: 20,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: DivyaTheme.colors.border,
-    borderRadius: 22,
-    padding: 22,
+  trustItem: {
+    width: "31%",
     alignItems: "center",
+    gap: 6,
   },
 
-  emptyBookingIcon: {
-    width: 55,
-    height: 55,
-    borderRadius: 18,
-    backgroundColor: "#FFF2DE",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-
-  emptyBookingTitle: {
-    color: DivyaTheme.colors.deep,
-    fontSize: 16,
-    fontWeight: "900",
-  },
-
-  emptyBookingText: {
+  trustText: {
     color: DivyaTheme.colors.muted,
+    fontSize: 10,
     textAlign: "center",
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6,
-    maxWidth: 280,
+    fontWeight: "600",
   },
 });
