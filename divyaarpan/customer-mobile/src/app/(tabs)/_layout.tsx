@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -10,24 +10,34 @@ function TabIcon({
   focused,
   active,
   inactive,
+  special = false,
 }: {
   focused: boolean;
   active: IconName;
   inactive: IconName;
+  special?: boolean;
 }) {
+  if (special) {
+    return (
+      <View style={styles.specialOuter}>
+        <View style={styles.specialCircle}>
+          <Text style={styles.specialOm}>ॐ</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.icon}>
+    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
       <Ionicons
         name={focused ? active : inactive}
         size={focused ? 20 : 19}
         color={
           focused
-            ? DivyaTheme.colors.vermilionDeep
-            : DivyaTheme.colors.subtle
+            ? "#FFF8EC"
+            : DivyaTheme.colors.muted
         }
       />
-
-      {focused ? <View style={styles.activeDot} /> : null}
     </View>
   );
 }
@@ -40,33 +50,36 @@ export default function TabLayout() {
         tabBarHideOnKeyboard: true,
 
         tabBarActiveTintColor: DivyaTheme.colors.vermilionDeep,
-        tabBarInactiveTintColor: DivyaTheme.colors.subtle,
+        tabBarInactiveTintColor: DivyaTheme.colors.muted,
 
         sceneStyle: {
-          backgroundColor: DivyaTheme.colors.background,
+          backgroundColor: "#FFF9F1",
         },
 
         tabBarStyle: {
-          height: Platform.OS === "web" ? 66 : 72,
-          paddingTop: 7,
-          paddingBottom: Platform.OS === "web" ? 7 : 11,
+          height: Platform.OS === "web" ? 82 : 88,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === "web" ? 8 : 13,
 
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: "rgba(122,101,87,0.18)",
+          borderTopWidth: 0,
 
-          backgroundColor: "rgba(251,247,240,0.98)",
+          backgroundColor: "#FFFDF9",
 
-          shadowColor: "#291814",
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.035,
-          shadowRadius: 14,
-          elevation: 4,
+          shadowColor: "#3C211B",
+          shadowOffset: {
+            width: 0,
+            height: -8,
+          },
+          shadowOpacity: 0.12,
+          shadowRadius: 24,
+
+          elevation: 14,
         },
 
         tabBarLabelStyle: {
           fontFamily: DivyaTheme.fonts.bodySemiBold,
-          fontSize: 8.5,
-          marginTop: 0,
+          fontSize: 9,
+          marginTop: 2,
         },
       }}
     >
@@ -74,6 +87,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
+
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
@@ -88,6 +102,7 @@ export default function TabLayout() {
         name="temples"
         options={{
           title: "Temples",
+
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
@@ -102,11 +117,13 @@ export default function TabLayout() {
         name="poojas"
         options={{
           title: "Poojas",
+
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
               active="flower"
               inactive="flower-outline"
+              special
             />
           ),
         }}
@@ -116,6 +133,7 @@ export default function TabLayout() {
         name="bookings"
         options={{
           title: "Bookings",
+
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
@@ -130,6 +148,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "You",
+
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
@@ -144,18 +163,61 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  icon: {
-    height: 27,
+  iconWrap: {
+    width: 39,
+    height: 30,
+
+    borderRadius: 15,
+
     alignItems: "center",
     justifyContent: "center",
   },
 
-  activeDot: {
-    position: "absolute",
-    bottom: -3,
-    width: 3,
-    height: 3,
-    borderRadius: 2,
+  iconWrapActive: {
     backgroundColor: DivyaTheme.colors.vermilionDeep,
+  },
+
+  specialOuter: {
+    width: 58,
+    height: 42,
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    marginTop: -12,
+  },
+
+  specialCircle: {
+    width: 54,
+    height: 54,
+
+    borderRadius: 27,
+
+    backgroundColor: "#6D1D24",
+
+    borderWidth: 3,
+    borderColor: "#FFF8EE",
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    shadowColor: "#421A17",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+
+    elevation: 8,
+  },
+
+  specialOm: {
+    fontFamily: DivyaTheme.fonts.displayMedium,
+
+    color: "#E7C276",
+
+    fontSize: 25,
+    lineHeight: 29,
   },
 });
