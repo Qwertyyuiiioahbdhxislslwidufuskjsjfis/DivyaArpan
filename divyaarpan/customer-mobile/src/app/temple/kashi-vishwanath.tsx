@@ -11,6 +11,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 
 import { DivyaTheme } from "@/constants/divya-theme";
+const kashi = require("../../../assets/signature/temples/kashi-vishwanath.jpg");
+
 
 const services = [
   {
@@ -38,9 +40,7 @@ export default function KashiVishwanathScreen() {
         contentContainerStyle={styles.content}
       >
         <ImageBackground
-          source={{
-            uri: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1400&q=90",
-          }}
+          source={kashi}
           style={styles.hero}
           imageStyle={styles.heroImage}
         >
@@ -173,7 +173,13 @@ export default function KashiVishwanathScreen() {
 
                 <Pressable
                   style={styles.bookButtonSmall}
-                  onPress={() => router.push("/poojas")}
+                  onPress={() =>
+                    router.push(
+                      `/temple-pooja-booking?pooja=${encodeURIComponent(
+                        service.title
+                      )}` as never
+                    )
+                  }
                 >
                   <Text style={styles.bookButtonSmallText}>Book</Text>
                 </Pressable>
@@ -213,9 +219,13 @@ export default function KashiVishwanathScreen() {
 
           <Pressable
             style={styles.primaryButton}
-            onPress={() => router.push("/poojas")}
+            onPress={() =>
+              router.push(
+                "/temple-pooja-booking?pooja=Rudrabhishek" as never
+              )
+            }
           >
-            <Text style={styles.primaryButtonText}>Explore Temple Poojas</Text>
+            <Text style={styles.primaryButtonText}>Begin a Temple Pooja</Text>
 
             <Ionicons
               name="arrow-forward"

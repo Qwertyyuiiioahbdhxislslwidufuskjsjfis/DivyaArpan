@@ -11,6 +11,14 @@ import {
 } from "@expo-google-fonts/cormorant-garamond";
 
 import {
+  NotoSansDevanagari_500Medium,
+  NotoSansDevanagari_600SemiBold,
+  NotoSansDevanagari_700Bold,
+  NotoSansDevanagari_800ExtraBold,
+  useFonts as useDevanagariFonts,
+} from "@expo-google-fonts/noto-sans-devanagari";
+
+import {
   Manrope_400Regular,
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -20,12 +28,20 @@ import {
 } from "@expo-google-fonts/manrope";
 
 import { DivyaTheme } from "@/constants/divya-theme";
+import { LanguageProvider } from "@/i18n/LanguageProvider";
 
 export default function RootLayout() {
   const [cormorantLoaded] = useCormorantFonts({
     CormorantGaramond_500Medium,
     CormorantGaramond_600SemiBold,
     CormorantGaramond_700Bold,
+  });
+
+  const [devanagariLoaded] = useDevanagariFonts({
+    NotoSansDevanagari_500Medium,
+    NotoSansDevanagari_600SemiBold,
+    NotoSansDevanagari_700Bold,
+    NotoSansDevanagari_800ExtraBold,
   });
 
   const [manropeLoaded] = useManropeFonts({
@@ -36,7 +52,7 @@ export default function RootLayout() {
     Manrope_800ExtraBold,
   });
 
-  const fontsLoaded = cormorantLoaded && manropeLoaded;
+  const fontsLoaded = cormorantLoaded && manropeLoaded && devanagariLoaded;
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -50,10 +66,11 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={styles.outerCanvas}>
-      <StatusBar style="dark" />
+    <LanguageProvider>
+      <View style={styles.outerCanvas}>
+        <StatusBar style="dark" />
 
-      <View style={styles.appFrame}>
+        <View style={styles.appFrame}>
         <Stack
           screenOptions={{
             headerShown: false,
@@ -72,8 +89,9 @@ export default function RootLayout() {
             }}
           />
         </Stack>
+        </View>
       </View>
-    </View>
+    </LanguageProvider>
   );
 }
 

@@ -1,21 +1,21 @@
 export const DivyaTheme = {
   colors: {
     // Signature canvas
-    background: "#FBF7F0",
-    backgroundDeep: "#F4ECE1",
-    canvas: "#F8F2E9",
+    background: "#FFF8EF",
+    backgroundDeep: "#FFF0E2",
+    canvas: "#FFF7ED",
 
     // Elevated surfaces
     surface: "#FFFEFB",
-    surfaceWarm: "#F8EFE2",
-    surfaceMuted: "#EFE3D5",
+    surfaceWarm: "#FFF0E2",
+    surfaceMuted: "#F7DEC7",
     glass: "rgba(255, 253, 248, 0.86)",
     glassDark: "rgba(40, 18, 18, 0.58)",
 
     // Vermilion / sacred red
-    vermilion: "#A33A2B",
-    vermilionDeep: "#72251F",
-    vermilionSoft: "#C96A57",
+    vermilion: "#F45112",
+    vermilionDeep: "#C93808",
+    vermilionSoft: "#FF7A3D",
 
     // Compatibility
     burgundy: "#6E2430",
@@ -35,9 +35,9 @@ export const DivyaTheme = {
     goldWash: "#F7ECD2",
 
     // Saffron used only as an accent
-    saffron: "#D9782E",
-    saffronDark: "#B85A20",
-    saffronLight: "#F0A35C",
+    saffron: "#F45112",
+    saffronDark: "#D63E08",
+    saffronLight: "#FF9B68",
 
     // Secondary warmth
     sunrise: "#E79451",
@@ -47,10 +47,10 @@ export const DivyaTheme = {
     lotusLight: "#F3DFDF",
 
     // Typography
-    ink: "#251A18",
-    deep: "#251A18",
-    text: "#443532",
-    muted: "#7B6A64",
+    ink: "#24150F",
+    deep: "#24150F",
+    text: "#44302A",
+    muted: "#74625B",
     subtle: "#AA9991",
 
     // Utility
@@ -65,6 +65,10 @@ export const DivyaTheme = {
   },
 
   fonts: {
+    hindiMedium: "NotoSansDevanagari_500Medium",
+    hindiSemiBold: "NotoSansDevanagari_600SemiBold",
+    hindiBold: "NotoSansDevanagari_700Bold",
+    hindiExtraBold: "NotoSansDevanagari_800ExtraBold",
     display: "CormorantGaramond_600SemiBold",
     displayMedium: "CormorantGaramond_500Medium",
     displayBold: "CormorantGaramond_700Bold",
@@ -78,21 +82,21 @@ export const DivyaTheme = {
 
   type: {
     displayXL: {
-      fontFamily: "CormorantGaramond_600SemiBold",
-      fontSize: 46,
-      lineHeight: 46,
+      fontFamily: "CormorantGaramond_700Bold",
+      fontSize: 48,
+      lineHeight: 48,
       letterSpacing: -1.1,
     },
     displayLG: {
-      fontFamily: "CormorantGaramond_600SemiBold",
-      fontSize: 36,
-      lineHeight: 38,
+      fontFamily: "CormorantGaramond_700Bold",
+      fontSize: 38,
+      lineHeight: 40,
       letterSpacing: -0.7,
     },
     displayMD: {
-      fontFamily: "CormorantGaramond_600SemiBold",
-      fontSize: 29,
-      lineHeight: 32,
+      fontFamily: "CormorantGaramond_700Bold",
+      fontSize: 31,
+      lineHeight: 34,
       letterSpacing: -0.35,
     },
     heading: {

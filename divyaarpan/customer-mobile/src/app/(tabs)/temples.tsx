@@ -14,6 +14,10 @@ import { router } from "expo-router";
 
 import { DivyaTheme } from "@/constants/divya-theme";
 
+const kashi = require("../../../assets/signature/temples/kashi-vishwanath.jpg");
+const siddhivinayak = require("../../../assets/signature/temples/siddhivinayak.jpg");
+const tirupati = require("../../../assets/signature/temples/tirupati-balaji.jpg");
+
 const filters = ["All", "Jyotirlinga", "Shaktipeeth", "Popular"];
 
 const temples = [
@@ -22,52 +26,29 @@ const temples = [
     city: "Varanasi",
     state: "Uttar Pradesh",
     category: "Jyotirlinga",
-    rating: "4.9",
-    poojas: "12 Poojas",
-    image:
-      "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=90",
-  },
-  {
-    name: "Mahakaleshwar",
-    city: "Ujjain",
-    state: "Madhya Pradesh",
-    category: "Jyotirlinga",
-    rating: "4.8",
-    poojas: "14 Poojas",
-    image:
-      "https://images.unsplash.com/photo-1600100397608-f010f5c0a56d?auto=format&fit=crop&w=1200&q=90",
-  },
-  {
-    name: "Somnath",
-    city: "Prabhas Patan",
-    state: "Gujarat",
-    category: "Jyotirlinga",
-    rating: "4.8",
-    poojas: "10 Poojas",
-    image:
-      "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90",
-  },
-  {
-    name: "Tirupati Balaji",
-    city: "Tirupati",
-    state: "Andhra Pradesh",
-    category: "Popular",
-    rating: "4.9",
-    poojas: "18 Sevas",
-    image:
-      "https://images.unsplash.com/photo-1606298855672-3efb63017be8?auto=format&fit=crop&w=1200&q=90",
+    offering: "Temple Pooja",
+    image: kashi,
+    route: "/temple/kashi-vishwanath",
   },
   {
     name: "Siddhivinayak",
     city: "Mumbai",
     state: "Maharashtra",
     category: "Popular",
-    rating: "4.8",
-    poojas: "9 Poojas",
-    image:
-      "https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=1200&q=90",
+    offering: "Ganesh Pooja",
+    image: siddhivinayak,
+    route: null,
   },
-];
+  {
+    name: "Tirupati Balaji",
+    city: "Tirupati",
+    state: "Andhra Pradesh",
+    category: "Popular",
+    offering: "Temple Seva",
+    image: tirupati,
+    route: null,
+  },
+] as const;
 
 export default function TemplesScreen() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -86,9 +67,9 @@ export default function TemplesScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.eyebrow}>SACRED INDIA</Text>
-            <Text style={styles.title}>Temples</Text>
+            <Text style={styles.title}>Mandirs</Text>
             <Text style={styles.subtitle}>
-              Discover sacred destinations across India
+              Discover sacred Mandirs and choose how you wish to offer Pooja
             </Text>
           </View>
 
@@ -109,7 +90,7 @@ export default function TemplesScreen() {
           />
 
           <Text style={styles.searchText}>
-            Search temple, city or state...
+            Search Mandir, city or deity...
           </Text>
 
           <Pressable style={styles.filterButton}>
@@ -153,7 +134,7 @@ export default function TemplesScreen() {
 
         <Pressable onPress={() => router.push("/temple/kashi-vishwanath")}>
         <ImageBackground
-          source={{ uri: temples[0].image }}
+          source={temples[0].image}
           style={styles.featured}
           imageStyle={styles.featuredImage}
         >
@@ -225,11 +206,11 @@ export default function TemplesScreen() {
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.sectionEyebrow}>EXPLORE</Text>
-            <Text style={styles.sectionTitle}>Sacred destinations</Text>
+            <Text style={styles.sectionTitle}>Sacred Mandirs</Text>
           </View>
 
           <Text style={styles.resultCount}>
-            {visibleTemples.length} temples
+            {visibleTemples.length} Mandirs
           </Text>
         </View>
 
@@ -239,13 +220,13 @@ export default function TemplesScreen() {
               key={temple.name}
               style={styles.templeCard}
               onPress={() => {
-                if (temple.name === "Kashi Vishwanath") {
-                  router.push("/temple/kashi-vishwanath");
+                if (temple.route) {
+                  router.push(temple.route);
                 }
               }}
             >
               <Image
-                source={{ uri: temple.image }}
+                source={temple.image}
                 style={styles.templeImage}
               />
 
@@ -281,9 +262,15 @@ export default function TemplesScreen() {
 
                 <View style={styles.templeBottom}>
                   <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={14} color="#E4A72A" />
-                    <Text style={styles.rating}>{temple.rating}</Text>
-                    <Text style={styles.poojaCount}>• {temple.poojas}</Text>
+                    <Ionicons
+                      name="flower-outline"
+                      size={14}
+                      color={DivyaTheme.colors.goldDeep}
+                    />
+
+                    <Text style={styles.rating}>
+                      {temple.offering}
+                    </Text>
                   </View>
 
                   <View style={styles.arrowCircle}>
@@ -310,7 +297,7 @@ export default function TemplesScreen() {
 
           <View style={styles.discoveryCopy}>
             <Text style={styles.discoveryTitle}>
-              Explore temples across India
+              Your journey to sacred Mandirs
             </Text>
 
             <Text style={styles.discoveryBody}>

@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { DivyaTheme } from "@/constants/divya-theme";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -10,18 +11,18 @@ function TabIcon({
   focused,
   active,
   inactive,
-  special = false,
+  sacred = false,
 }: {
   focused: boolean;
   active: IconName;
   inactive: IconName;
-  special?: boolean;
+  sacred?: boolean;
 }) {
-  if (special) {
+  if (sacred) {
     return (
-      <View style={styles.specialOuter}>
-        <View style={styles.specialCircle}>
-          <Text style={styles.specialOm}>ॐ</Text>
+      <View style={styles.sacredOuter}>
+        <View style={[styles.sacredCircle, focused && styles.sacredCircleActive]}>
+          <Text style={styles.sacredOm}>ॐ</Text>
         </View>
       </View>
     );
@@ -32,17 +33,15 @@ function TabIcon({
       <Ionicons
         name={focused ? active : inactive}
         size={focused ? 20 : 19}
-        color={
-          focused
-            ? "#FFF8EC"
-            : DivyaTheme.colors.muted
-        }
+        color={focused ? "#FFF9EE" : DivyaTheme.colors.muted}
       />
     </View>
   );
 }
 
 export default function TabLayout() {
+  const { t } = useLanguage();
+
   return (
     <Tabs
       screenOptions={{
@@ -61,17 +60,18 @@ export default function TabLayout() {
           paddingTop: 8,
           paddingBottom: Platform.OS === "web" ? 8 : 13,
 
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: "rgba(171, 128, 83, 0.10)",
 
           backgroundColor: "#FFFDF9",
 
           shadowColor: "#3C211B",
           shadowOffset: {
             width: 0,
-            height: -8,
+            height: -7,
           },
-          shadowOpacity: 0.12,
-          shadowRadius: 24,
+          shadowOpacity: 0.09,
+          shadowRadius: 22,
 
           elevation: 14,
         },
@@ -86,8 +86,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-
+          title: t("home"),
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
@@ -99,31 +98,29 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="temples"
+        name="poojas"
         options={{
-          title: "Temples",
-
+          title: t("poojas"),
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              active="business"
-              inactive="business-outline"
+              active="flower"
+              inactive="flower-outline"
             />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="poojas"
+        name="temples"
         options={{
-          title: "Poojas",
-
+          title: t("mandirs"),
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              active="flower"
-              inactive="flower-outline"
-              special
+              active="business"
+              inactive="business-outline"
+              sacred
             />
           ),
         }}
@@ -132,13 +129,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="bookings"
         options={{
-          title: "Bookings",
-
+          title: t("pandit"),
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              active="calendar"
-              inactive="calendar-outline"
+              active="people"
+              inactive="people-outline"
             />
           ),
         }}
@@ -147,8 +143,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "You",
-
+          title: t("you"),
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
@@ -166,9 +161,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 39,
     height: 30,
-
     borderRadius: 15,
-
     alignItems: "center",
     justifyContent: "center",
   },
@@ -177,26 +170,23 @@ const styles = StyleSheet.create({
     backgroundColor: DivyaTheme.colors.vermilionDeep,
   },
 
-  specialOuter: {
+  sacredOuter: {
     width: 58,
     height: 42,
-
     alignItems: "center",
     justifyContent: "center",
-
     marginTop: -12,
   },
 
-  specialCircle: {
+  sacredCircle: {
     width: 54,
     height: 54,
-
     borderRadius: 27,
 
-    backgroundColor: "#6D1D24",
+    backgroundColor: "#F8EEDF",
 
-    borderWidth: 3,
-    borderColor: "#FFF8EE",
+    borderWidth: 2,
+    borderColor: "#E9D3AB",
 
     alignItems: "center",
     justifyContent: "center",
@@ -206,17 +196,20 @@ const styles = StyleSheet.create({
       width: 0,
       height: 5,
     },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.12,
     shadowRadius: 12,
 
-    elevation: 8,
+    elevation: 7,
   },
 
-  specialOm: {
+  sacredCircleActive: {
+    backgroundColor: DivyaTheme.colors.vermilionDeep,
+    borderColor: "#F6E1B4",
+  },
+
+  sacredOm: {
     fontFamily: DivyaTheme.fonts.displayMedium,
-
-    color: "#E7C276",
-
+    color: DivyaTheme.colors.champagneDeep,
     fontSize: 25,
     lineHeight: 29,
   },
