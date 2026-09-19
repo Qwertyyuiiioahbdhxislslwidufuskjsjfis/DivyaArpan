@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { RankedPandit } from "./ranking";
 import { createPanditNotification } from "@/lib/pandit-notifications";
 
@@ -6,10 +6,11 @@ const DISPATCH_BATCH_SIZE = 5;
 
 
 export async function dispatchBookingOffers(
+  tx: Prisma.TransactionClient,
   bookingId: number,
   rankedPandits: RankedPandit[]
 ) {
-  const booking = await prisma.panditBooking.findUnique({
+  const booking = await tx.panditBooking.findUnique({
     where: {
       id: bookingId,
     },
@@ -20,7 +21,7 @@ export async function dispatchBookingOffers(
   }
 
   // Find Pandits who have already received an offer for this booking.
-  const existingOffers = await prisma.panditBookingOffer.findMany({
+  const existingOffers = await tx.panditBookingOffer.findMany({
     where: {
       bookingId,
     },
@@ -44,7 +45,7 @@ export async function dispatchBookingOffers(
   }
 
   // Determine the next dispatch round.
-  const latestOffer = await prisma.panditBookingOffer.findFirst({
+  const latestOffer = await tx.panditBookingOffer.findFirst({
     where: {
       bookingId,
     },
@@ -67,7 +68,7 @@ export async function dispatchBookingOffers(
   const offers = [];
 
   for (const pandit of selectedPandits) {
-    const panditService = await prisma.panditService.findFirst({
+    const panditService = await tx.panditService.findFirst({
       where: {
         panditId: pandit.id,
         serviceName: {
@@ -87,7 +88,7 @@ export async function dispatchBookingOffers(
         continue;
       }
 
-    const offer = await prisma.panditBookingOffer.create({
+    const offer = await tx.panditBookingOffer.create({
       data: {
         bookingId,
         panditId: pandit.id,
@@ -103,7 +104,7 @@ export async function dispatchBookingOffers(
       },
     });
 
-    await createPanditNotification(prisma, {
+    await createPanditNotification(tx, {
       panditId: pandit.id,
       type: "BOOKING_OFFER",
       title: "New booking request",

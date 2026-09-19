@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { requireRole } from "../../../../../lib/auth";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "../../../../../lib/auth";
 
 export async function POST(
   request: NextRequest,
@@ -10,13 +9,19 @@ export async function POST(
 ) {
   try {
     if (!(await requireRole("ADMIN"))) {
-      return NextResponse.json({ success: false, message: "Admin access required." }, { status: 403 });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Admin access required.",
+        },
+        { status: 403 }
+      );
     }
-    const { offerId } = await params;
 
+    const { offerId } = await params;
     const offerIdNumber = Number(offerId);
 
-    if (Number.isNaN(offerIdNumber)) {
+    if (!offerIdNumber || Number.isNaN(offerIdNumber)) {
       return NextResponse.json(
         { message: "Invalid offer id." },
         { status: 400 }
@@ -42,48 +47,85 @@ export async function POST(
         throw new Error("OFFER_ALREADY_PROCESSED");
       }
 
-      const latestBooking = await tx.panditBooking.findUnique({
+      const now = new Date();
+
+      if (offer.expiresAt && offer.expiresAt <= now) {
+        throw new Error("OFFER_EXPIRED");
+      }
+
+      /*
+       * Claim the booking atomically.
+       *
+       * Only one concurrent accept can change an unassigned SEARCHING
+       * booking into PANDIT_ASSIGNED.
+       */
+      const bookingClaim = await tx.panditBooking.updateMany({
         where: {
           id: offer.bookingId,
-        },
-      });
-
-      if (!latestBooking) {
-        throw new Error("BOOKING_NOT_FOUND");
-      }
-
-      if (latestBooking.panditId) {
-        throw new Error("BOOKING_ALREADY_ASSIGNED");
-      }
-
-      const acceptedOffer = await tx.panditBookingOffer.update({
-        where: {
-          id: offer.id,
-        },
-        data: {
-          status: "ACCEPTED",
-          respondedAt: new Date(),
-        },
-      });
-
-      const booking = await tx.panditBooking.update({
-        where: {
-          id: latestBooking.id,
+          panditId: null,
+          status: "SEARCHING",
         },
         data: {
           panditId: offer.panditId,
           panditName: offer.pandit.name,
+          amount: offer.offeredAmount,
           status: "PANDIT_ASSIGNED",
-          assignedAt: new Date(),
+          assignedAt: now,
         },
       });
+
+      if (bookingClaim.count !== 1) {
+        throw new Error("BOOKING_ALREADY_ASSIGNED");
+      }
+
+      /*
+       * Claim the offer atomically as well.
+       *
+       * If reject/expiry processed this offer first, this update affects
+       * zero rows and the entire transaction rolls back, including the
+       * booking assignment above.
+       */
+      const acceptedOfferResult =
+        await tx.panditBookingOffer.updateMany({
+          where: {
+            id: offer.id,
+            status: "PENDING",
+            expiresAt: {
+              gt: now,
+            },
+          },
+          data: {
+            status: "ACCEPTED",
+            respondedAt: now,
+          },
+        });
+
+      if (acceptedOfferResult.count !== 1) {
+        throw new Error("OFFER_ALREADY_PROCESSED");
+      }
+
+      const booking =
+        await tx.panditBooking.findUniqueOrThrow({
+          where: {
+            id: offer.bookingId,
+          },
+        });
+
       await tx.panditBookingStatusHistory.create({
-        data: { bookingId: booking.id, fromStatus: latestBooking.status, toStatus: booking.status, actorRole: "ADMIN" },
+        data: {
+          bookingId: booking.id,
+          fromStatus: offer.booking.status,
+          toStatus: booking.status,
+          actorRole: "ADMIN",
+        },
       });
 
+      /*
+       * Once this Pandit wins, close all remaining pending offers.
+       */
       await tx.panditBookingOffer.updateMany({
         where: {
-          bookingId: latestBooking.id,
+          bookingId: offer.bookingId,
           id: {
             not: offer.id,
           },
@@ -91,9 +133,16 @@ export async function POST(
         },
         data: {
           status: "EXPIRED",
-          respondedAt: new Date(),
+          respondedAt: now,
         },
       });
+
+      const acceptedOffer =
+        await tx.panditBookingOffer.findUniqueOrThrow({
+          where: {
+            id: offer.id,
+          },
+        });
 
       return {
         booking,
@@ -120,7 +169,9 @@ export async function POST(
     );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "UNKNOWN_ERROR";
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN_ERROR";
 
     switch (message) {
       case "OFFER_NOT_FOUND":
@@ -129,21 +180,29 @@ export async function POST(
           { status: 404 }
         );
 
-      case "BOOKING_NOT_FOUND":
-        return NextResponse.json(
-          { message: "Booking not found." },
-          { status: 404 }
-        );
-
       case "OFFER_ALREADY_PROCESSED":
         return NextResponse.json(
-          { message: "Offer has already been processed." },
+          {
+            message:
+              "Offer has already been processed.",
+          },
+          { status: 409 }
+        );
+
+      case "OFFER_EXPIRED":
+        return NextResponse.json(
+          {
+            message: "This booking offer has expired.",
+          },
           { status: 409 }
         );
 
       case "BOOKING_ALREADY_ASSIGNED":
         return NextResponse.json(
-          { message: "Booking has already been assigned." },
+          {
+            message:
+              "Booking has already been assigned.",
+          },
           { status: 409 }
         );
 

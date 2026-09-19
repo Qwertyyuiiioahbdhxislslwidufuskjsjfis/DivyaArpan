@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/app/lib/auth";
 import { hasGuestBookingAccess } from "@/app/lib/booking-access";
 import { runMatchingEngine } from "@/lib/matching-engine";
+import { createPanditNotification } from "@/lib/pandit-notifications";
 
 export async function GET(
   request: NextRequest,
@@ -88,18 +89,65 @@ export async function GET(
           },
         });
 
-      if (expiredOffers.length > 0) {
-        await prisma.panditBookingOffer.updateMany({
-          where: {
-            id: {
-              in: expiredOffers.map((offer) => offer.id),
-            },
-            status: "PENDING",
-          },
-          data: {
-            status: "EXPIRED",
-            respondedAt: now,
-          },
+      /*
+       * Claim each expired offer independently.
+       *
+       * The conditional PENDING -> EXPIRED update means an accept,
+       * reject, or another polling request can win the race safely.
+       * Only the transaction that actually changes the offer creates
+       * the expiry notification.
+       */
+      for (const expiredOffer of expiredOffers) {
+        await prisma.$transaction(async (tx) => {
+          const currentOffer =
+            await tx.panditBookingOffer.findUnique({
+              where: {
+                id: expiredOffer.id,
+              },
+              include: {
+                booking: true,
+              },
+            });
+
+          if (
+            !currentOffer ||
+            currentOffer.status !== "PENDING" ||
+            !currentOffer.expiresAt ||
+            currentOffer.expiresAt > now
+          ) {
+            return;
+          }
+
+          const expiredClaim =
+            await tx.panditBookingOffer.updateMany({
+              where: {
+                id: currentOffer.id,
+                status: "PENDING",
+                expiresAt: {
+                  lte: now,
+                },
+              },
+              data: {
+                status: "EXPIRED",
+                respondedAt: now,
+              },
+            });
+
+          if (expiredClaim.count !== 1) {
+            return;
+          }
+
+          await createPanditNotification(tx, {
+            panditId: currentOffer.panditId,
+            type: "OFFER_EXPIRED",
+            title: "Booking offer expired",
+            message:
+              `The ${currentOffer.booking.service} request expired before it was accepted.`,
+            eventKey:
+              `offer-expired:${currentOffer.id}`,
+            bookingId: currentOffer.bookingId,
+            offerId: currentOffer.id,
+          });
         });
       }
 

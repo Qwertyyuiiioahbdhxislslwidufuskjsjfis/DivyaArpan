@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { runMatchingEngine } from "@/lib/matching-engine";
 import { getCurrentUserFromRequest } from "../../../../../lib/auth";
 
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
@@ -87,16 +87,28 @@ export async function POST(
         throw new Error("OFFER_EXPIRED");
       }
 
-      await tx.panditBookingOffer.update({
-        where: {
-          id: offer.id,
-        },
-        data: {
-          status: "DECLINED",
-          respondedAt: new Date(),
-          rejectionReason: reason,
-        },
-      });
+      const now = new Date();
+
+      const rejectedOffer =
+        await tx.panditBookingOffer.updateMany({
+          where: {
+            id: offer.id,
+            panditId: user.panditId,
+            status: "PENDING",
+            expiresAt: {
+              gt: now,
+            },
+          },
+          data: {
+            status: "DECLINED",
+            respondedAt: now,
+            rejectionReason: reason,
+          },
+        });
+
+      if (rejectedOffer.count !== 1) {
+        throw new Error("OFFER_ALREADY_PROCESSED");
+      }
 
       const pendingOffers = await tx.panditBookingOffer.count({
         where: {
@@ -105,25 +117,39 @@ export async function POST(
         },
       });
 
-      if (pendingOffers === 0) {
-        const updatedBooking = await tx.panditBooking.update({
-          where: {
-            id: offer.bookingId,
-          },
-          data: {
-            status: "NO_PANDIT_AVAILABLE",
-          },
-        });
-        await tx.panditBookingStatusHistory.create({
-          data: { bookingId: updatedBooking.id, fromStatus: "SEARCHING", toStatus: updatedBooking.status, actorRole: "PANDIT" },
-        });
-      }
-
       return {
         bookingId: offer.bookingId,
         pendingOffers,
       };
     });
+
+    let bookingStatus = "SEARCHING";
+    let nextRoundOffers = 0;
+
+    /*
+     * If this was the last active offer in the current round,
+     * ask the matching engine for the next eligible Pandits.
+     *
+     * runMatchingEngine() already excludes Pandits who received
+     * this booking in previous rounds. If nobody remains, the
+     * matching engine will set NO_PANDIT_AVAILABLE.
+     */
+    if (result.pendingOffers === 0) {
+      const nextOffers = await runMatchingEngine(result.bookingId);
+      nextRoundOffers = nextOffers.length;
+
+      const latestBooking = await prisma.panditBooking.findUnique({
+        where: {
+          id: result.bookingId,
+        },
+        select: {
+          status: true,
+        },
+      });
+
+      bookingStatus =
+        latestBooking?.status ?? "NO_PANDIT_AVAILABLE";
+    }
 
     return NextResponse.json(
       {
@@ -131,10 +157,8 @@ export async function POST(
         message: "Booking offer rejected successfully.",
         bookingId: result.bookingId,
         pendingOffers: result.pendingOffers,
-        bookingStatus:
-          result.pendingOffers === 0
-            ? "NO_PANDIT_AVAILABLE"
-            : "SEARCHING",
+        nextRoundOffers,
+        bookingStatus,
       },
       {
         status: 200,

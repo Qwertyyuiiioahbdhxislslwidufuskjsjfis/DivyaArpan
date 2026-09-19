@@ -1,8 +1,9 @@
-import { PanditBookingType, PanditVerificationStatus } from "@prisma/client";
+import { PanditBookingType, PanditVerificationStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 interface FilterParams {
   bookingId: number;
+  tx?: Prisma.TransactionClient;
   city: string;
   pincode: string | null;
   service: string;
@@ -50,7 +51,9 @@ export async function findEligiblePandits({
   bookingType,
   date,
   time,
+  tx,
 }: FilterParams) {
+  const db = tx ?? prisma;
   console.log("======================================");
   console.log("DIVYAARPAN SMART MATCH ENGINE");
   console.log("Searching Eligible Pandits...");
@@ -63,7 +66,7 @@ export async function findEligiblePandits({
 
   // Pandits who have already received an offer for this booking
   // must not be selected again in a later matching round.
-  const previouslyOffered = await prisma.panditBookingOffer.findMany({
+  const previouslyOffered = await db.panditBookingOffer.findMany({
     where: {
       bookingId,
     },
@@ -81,7 +84,7 @@ export async function findEligiblePandits({
     excludedPanditIds.length
   );
 
-  const pandits = await prisma.pandit.findMany({
+  const pandits = await db.pandit.findMany({
     where: {
       id: {
         notIn: excludedPanditIds,
