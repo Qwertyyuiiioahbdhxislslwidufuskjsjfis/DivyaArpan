@@ -171,7 +171,14 @@ export default function TemplePoojaBookingScreen() {
             <View style={styles.heroTop}>
               <Pressable
                 style={styles.glassButton}
-                onPress={() => router.back()}
+                onPress={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                    return;
+                  }
+
+                  router.replace("/(tabs)");
+                }}
               >
                 <Ionicons
                   name="arrow-back"

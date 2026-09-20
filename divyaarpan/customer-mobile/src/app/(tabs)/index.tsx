@@ -96,17 +96,20 @@ export default function HomeScreen() {
 
   useEffect(() => {
     livePulse.value = withRepeat(
-      withTiming(1, { duration: 1200 }),
+      withSequence(
+        withTiming(1, { duration: 900 }),
+        withTiming(0, { duration: 900 })
+      ),
       -1,
       false
     );
   }, [livePulse]);
 
   const livePulseStyle = useAnimatedStyle(() => ({
-    opacity: 0.65 * (1 - livePulse.value),
+    opacity: 0.18 + livePulse.value * 0.52,
     transform: [
       {
-        scale: 1 + livePulse.value * 1.8,
+        scale: 1 + livePulse.value * 1.35,
       },
     ],
   }));
@@ -2266,27 +2269,31 @@ const styles = StyleSheet.create({
   },
 
   livePanditSignal: {
-    width: 14,
+    width: 20,
     height: 14,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
+    marginRight: 3,
   },
 
   livePanditPulseRing: {
     position: "absolute",
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#59E391",
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(45,255,125,0.28)",
+    borderWidth: 1,
+    borderColor: "#58FF98",
   },
 
   livePanditDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#70E29A",
-    marginRight: 8,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#55FF91",
+    borderWidth: 1,
+    borderColor: "#D1FFE1",
   },
 
   livePanditDotMuted: {
