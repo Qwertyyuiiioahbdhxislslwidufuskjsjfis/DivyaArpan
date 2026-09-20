@@ -473,7 +473,7 @@ export default function TemplePoojaBookingScreen() {
               </Text>
 
               <Text style={styles.sectionTitle}>
-                What are you praying for?
+                What is your Sankalp?
               </Text>
             </View>
 
@@ -483,16 +483,11 @@ export default function TemplePoojaBookingScreen() {
           </View>
 
           <Text style={styles.sectionDescription}>
-            Your intention will remain connected to
+            Your Sankalp will remain connected to
             this Pooja throughout the sacred journey.
           </Text>
 
           <View style={styles.sankalpCard}>
-            <LinearGradient
-              colors={["#FFFDF8", "#FBF1E3"]}
-              style={StyleSheet.absoluteFill}
-            />
-
             <View style={styles.sankalpHeader}>
               <View style={styles.lotusIcon}>
                 <Ionicons
@@ -504,25 +499,30 @@ export default function TemplePoojaBookingScreen() {
 
               <View style={styles.sankalpHeaderCopy}>
                 <Text style={styles.sankalpLabel}>
-                  Prayer intention
+                  Sankalp
                 </Text>
 
                 <Text style={styles.sankalpHint}>
-                  Offered with your name during Pooja
+                  Offered with your name during the Pooja
                 </Text>
               </View>
             </View>
 
-            <TextInput
-              value={sankalp}
-              onChangeText={setSankalp}
-              multiline
-              maxLength={300}
-              placeholder="For family wellbeing, health, peace, career, marriage or a personal prayer..."
-              placeholderTextColor="#A79383"
-              style={styles.sankalpInput}
-              textAlignVertical="top"
-            />
+            <View style={styles.sankalpInputShell}>
+              <TextInput
+                value={sankalp}
+                onChangeText={setSankalp}
+                editable={true}
+                multiline={true}
+                maxLength={300}
+                placeholder="Write your Sankalp here..."
+                placeholderTextColor="#9A867B"
+                selectionColor="#76252A"
+                cursorColor="#76252A"
+                style={styles.sankalpInput}
+                textAlignVertical="top"
+              />
+            </View>
 
             <View style={styles.sankalpFooter}>
               <View style={styles.privateRow}>
@@ -1270,8 +1270,8 @@ const styles = StyleSheet.create({
   sankalpCard: {
     marginTop: 16,
     borderRadius: 24,
-    overflow: "hidden",
     padding: 16,
+    backgroundColor: "#FFFDF9",
     borderWidth: 1,
     borderColor: "#E4D1B7",
     ...DivyaTheme.shadow.soft,
@@ -1309,18 +1309,26 @@ const styles = StyleSheet.create({
     color: "#8B7770",
   },
 
-  sankalpInput: {
-    minHeight: 122,
-    marginTop: 14,
-    padding: 14,
+  sankalpInputShell: {
+    marginTop: 16,
+    minHeight: 132,
     borderRadius: 17,
-    backgroundColor: "rgba(248,238,224,0.86)",
+    backgroundColor: "#F8EEE0",
     borderWidth: 1,
     borderColor: "#EDDDC8",
-    fontFamily: DivyaTheme.fonts.body,
-    fontSize: 13,
-    lineHeight: 20,
-    color: DivyaTheme.colors.ink,
+    overflow: "visible",
+  },
+
+  sankalpInput: {
+    width: "100%",
+    minHeight: 130,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderWidth: 0,
+    backgroundColor: "transparent",
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#2F1B17",
   },
 
   sankalpFooter: {
